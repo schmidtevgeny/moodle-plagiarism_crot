@@ -59,22 +59,19 @@ class plagiarism_plugin_crot extends plagiarism_plugin {
      *
      */
     public function get_links($linkarray) {
-        //$userid, $file, $cmid, $course, $module
-        global $DB, $CFG;
+        global $DB, $CFG, $PAGE;
+        // echo '<pre>';
+        if (array_key_exists('forum', $linkarray))return '';
+        if (!array_key_exists('file', $linkarray))return '';
         $cmid = $linkarray['cmid'];
         $userid = $linkarray['userid'];
         $file = $linkarray['file'];
         $course = $linkarray['course'];
         $output="";
-//sw 08/27
         $cid = $course->id;
         if (empty($cid)) {
             $cid = $course;
         }
-// end sw 08/27
-//        if (!empty($plagiarismsettings['enabled'])) { //sw 4-21
-        //           if (isset($data->enabled)) { //sw 4-21
-
         //add link/information about this file to $output
         if (!empty($file)) { //sw
             if (!$plagiarism_crot_files_rec = $DB->get_record("plagiarism_crot_files", ["file_id" => $file->get_id()])) {
@@ -90,12 +87,18 @@ class plagiarism_plugin_crot extends plagiarism_plugin {
                         $sql_query = "SELECT count(*) as cnt from {$CFG->prefix}plagiarism_crot_fingerprint where crot_doc_id = '$crot_doc_rec->id'";
                         $numbertotal = $DB->get_record_sql($sql_query);// get total number of hashes for the current document
                         $perc = round(($similarity->max / $numbertotal->cnt) * 100, 2);
-                        $output .= "<br><b> <a href=\"../../plagiarism/crot/index.php?id_a=$crot_doc_rec->id&user_id=$userid&cid=$cid\">" . $perc . "%</a></b>";
+                        if ($numbertotal->cnt==0) $perc=0;
+                        if (has_capability('mod/assignment:grade', $PAGE->context)){
+                            $output .= "<br><b> <a href=\"../../plagiarism/crot/index.php?id_a=$crot_doc_rec->id&user_id=$userid&cid=$cid\">" .
+                                       get_string('col_similarity_score', 'plagiarism_crot').': '. $perc . "%</a></b>";
+                        }else {
+                            $output .= "<br><b> " .
+                                       get_string('col_similarity_score', 'plagiarism_crot').': '. $perc . "%</a></b>";
+                        }
                     }
                 }
             }
         } else {
-            // For online text/type-ins
             $path = $linkarray['content'];
             $path = strip_tags($path);
             $path = sha1($path);
@@ -116,13 +119,18 @@ class plagiarism_plugin_crot extends plagiarism_plugin {
                         $sql_query = "SELECT count(*) as cnt from {$CFG->prefix}plagiarism_crot_fingerprint where crot_doc_id = '$crot_doc_rec->id'";
                         $numbertotal = $DB->get_record_sql($sql_query);// get total number of hashes for the current document
                         $perc = round(($similarity->max / $numbertotal->cnt) * 100, 2);
-                        $output .= "<br><b> <a href=\"../../plagiarism/crot/index.php?id_a=$crot_doc_rec->id&user_id=$userid&cid=$cid\">" . $perc . "%</a></b> ";
+                        if (has_capability('mod/assignment:grade', $PAGE->context)){
+                            $output .= "<br><b> <a href=\"../../plagiarism/crot/index.php?id_a=$crot_doc_rec->id&user_id=$userid&cid=$cid\">" .
+                                       get_string('col_similarity_score', 'plagiarism_crot').': '. $perc . "%</a></b>";
+                        }else {
+                            $output .= "<br><b> " .
+                                       get_string('col_similarity_score', 'plagiarism_crot').': '. $perc . "%</a></b>";
+                        }
                     }
                 }
             }
-        }//sw
-//} //sw 4-21
-//} // sw 4-41
+        }
+
         return $output;
     }
 
@@ -205,16 +213,15 @@ class plagiarism_plugin_crot extends plagiarism_plugin {
         // check if this cmid has plagiarism enabled
         $select = 'cm = ? AND ' . $DB->sql_compare_text('name') . ' = "enabled"';
         if (!$enabled = $DB->get_record_select('plagiarism_crot_config', $select, [$cmid])) {
-            return;
+            return '';
         } else if ($enabled->value == 0) {
-            return;
+            return '';
         }
         $plagiarismsettings = (array)get_config('plagiarism_crot');
-        echo $OUTPUT->box_start('generalbox boxaligncenter', 'intro');
         $formatoptions = new stdClass;
         $formatoptions->noclean = true;
-        echo format_text($plagiarismsettings['crot_student_disclosure'], FORMAT_MOODLE, $formatoptions);
-        echo $OUTPUT->box_end();
+        return format_text($plagiarismsettings['crot_student_disclosure'], FORMAT_MOODLE, $formatoptions);
+
     }
 
     /**

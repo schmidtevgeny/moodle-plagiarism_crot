@@ -2,7 +2,7 @@
 /**
  *
  * @author Sergey Butakov, Svetlana Kim
- * 
+ *
  */
 
 	require_once("../../config.php");
@@ -12,7 +12,7 @@
 //	require_once($CFG->dirroot."/mod/assignment/lib.php");
 
     $ida = required_param('id_a', PARAM_INT);   // doc id
-    $user_id = required_param('user_id', PARAM_INT); 
+    $user_id = required_param('user_id', PARAM_INT);
     $cid = required_param('cid', PARAM_INT);    // course id
 
     if (! $course = $DB->get_record("course", array("id" => $cid))) {
@@ -63,11 +63,11 @@
     if (!$assignA = $DB->get_record($asnAtable, array("id" => $submissionA->assignment))) {
 		print_error(get_string('incorrect_assignmentAid','plagiarism_crot'));
 	}
-    
-    if(!has_capability('mod/assignment:grade', get_context_instance(CONTEXT_MODULE, $subA->cm))) {
+
+    if(!has_capability('mod/assignment:grade', context_module::instance($subA->cm))) {
         print_error(get_string('have_to_be_a_teacher', 'plagiarism_crot'));
     }
-    // build navigation and header    
+    // build navigation and header
     $view_url = new moodle_url('/mod/'.$asnAtable.'/view.php', array('id' => $subA->cm));
     $PAGE->navbar->add($assignA->name,$view_url);
     $PAGE->navbar->add($strmodulename. " - " . $strassignment);
@@ -75,23 +75,23 @@
     $PAGE->set_heading($course->fullname);
     $PAGE->set_url('/plagiarism/crot/index.php', array('ida' => $ida, 'user_id'=>$user_id, 'cid' => $cid));
     echo $OUTPUT->header();
-   
+
     $plagiarismsettings = (array)get_config('plagiarism_crot');
     $threshold = $plagiarismsettings['crot_threshold'];
-		
+
 	// fill the table with results
     $table = new html_table();
     $table->head  = array ($strstudent, $strsimilar);
     $table->align = array ("left", "left");
     $table->size = array('30%', '60%');
-	
+
     // select all the assignments that have similarities with the current document
     $table2 = "<table border=2 width='100%'><tr><td width='50%'>$strname</td><td width='40%'>$strcourse</td><td  width='10%'>$strscore</td></tr>";
     $sql_query = "SELECT * FROM {$CFG->prefix}plagiarism_crot_spair WHERE submission_a_id ='$ida' OR  submission_b_id = '$ida' order by number_of_same_hashes desc";
     $similars = $DB->get_records_sql($sql_query);
     $sql_query = "SELECT count(*) as cnt from {$CFG->prefix}plagiarism_crot_fingerprint where crot_doc_id = '$ida'";
     $numbertotal = $DB->get_record_sql($sql_query);// get total number of hashes in the current document
-        
+
 	// loop to select assignments with level of similarities above the threshold
 	if (!empty($similars)){
         foreach ($similars as $asim){
@@ -104,22 +104,22 @@
 		    // back from id to assignment id
 		    $subm3 = $DB->get_record("plagiarism_crot_documents", array("id"=>$partner));
             $party = $partner;
-		
+
 		    if ($subm3->crot_submission_id == 0) {
 			// web document
-                $wwwdoc = $DB->get_record("plagiarism_crot_webdoc", array("document_id"=>$party));					
+                $wwwdoc = $DB->get_record("plagiarism_crot_webdoc", array("document_id"=>$party));
                 $nURL = urldecode($wwwdoc->link);
                 $namelink = substr($nURL,0,40);
                 $courseBname = get_string('webdocument','plagiarism_crot');
 		    }
 		    else {
 				$subm4 = $DB->get_record("plagiarism_crot_files", array("id"=>$subm3->crot_submission_id));
-                $partner=$subm4->file_id;				
+                $partner=$subm4->file_id;
                 if ($partns = $DB->get_record("files", array("id"=>$partner))) {
                     $namelink = $partns->author;// get author name
                     $courseB = $DB->get_record("course", array("id"=>$subm4->courseid));
                     $courseBname = $courseB->shortname;// get course shortname
-                } 
+                }
                 else {
 			       $namelink = get_string('file_was_not_found','plagiarism_crot');
 			       $courseBname = get_string('course_not_applicable','plagiarism_crot');

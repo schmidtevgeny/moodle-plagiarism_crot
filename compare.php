@@ -9,7 +9,7 @@
 	global $CFG, $DB;
 	require_once($CFG->dirroot."/plagiarism/crot/locallib.php");
 	require_once($CFG->dirroot."/course/lib.php");
-	
+
 	// globals
     $plagiarismsettings = (array)get_config('plagiarism_crot');
 	$minclustersize = $plagiarismsettings['crot_clustersize'];
@@ -28,7 +28,7 @@
 	} else {
 		$isWebA = false;
 	}
-	
+
 	if (! $submB = $DB->get_record("plagiarism_crot_documents", array("id" => $idb))) {
 		print_error(get_string('incorrect_docBid','plagiarism_crot'));
 	}
@@ -82,7 +82,7 @@
 		}
 
 		require_course_login($courseA);
-        if(!has_capability('mod/assignment:grade', get_context_instance(CONTEXT_MODULE, $subA->cm))) {
+        if(!has_capability('mod/assignment:grade', context_module::instance($subA->cm))) {
             print_error(get_string('have_to_be_a_teacher', 'plagiarism_crot'));
         }
 	}
@@ -126,15 +126,15 @@
 	        if (! $courseB = $DB->get_record("course", array("id" => $subB->courseid))) {
 			print_error(get_string('incorrect_courseBid','plagiarism_crot'));
 		}
-		
+
 		require_course_login($courseB);
-    		if(!has_capability('mod/assignment:grade', get_context_instance(CONTEXT_MODULE, $subB->cm))) {
+    		if(!has_capability('mod/assignment:grade', context_module::instance($subB->cm))) {
 	            print_error(get_string('have_to_be_a_teacher', 'plagiarism_crot'));
     		}
 	}
 	// end of checking permissions
 
-	// built navigation	
+	// built navigation
 	$strmodulename = get_string("block_name", "plagiarism_crot");
 	$strassignment  = get_string("assignments", "plagiarism_crot");
 
@@ -147,7 +147,7 @@
     echo $OUTPUT->header();
 	// TODO add to log
 	//add_to_log($course->id, "antiplagiarism", "view all", "index.php?id=$course->id", "");
-	
+
 	// get content of the 1st document
 	$textA = stripslashes($submA->content);
 	//$textA = ($submA->content);
@@ -162,7 +162,7 @@
 	// TODO create separate function for coloring ?
 	$sameHashA = array ();
 
-	// coloring: step 1 - get same hashes	
+	// coloring: step 1 - get same hashes
 	foreach ($hashesA as $hashA) {
 		// look for same hash in the array  B
 		foreach ($hashesB as $hashB){
@@ -173,37 +173,37 @@
 			}
 		}
 	}
-	
+
 	// coloring: step 2 - put hashes into clusters
 	$clustersA = array();
 	$newcluster = array();
 	$sizeA = sizeof($sameHashA);
 	for ($i=0; $i<$sizeA; $i++)	{
 		if ($i >0 ) {
-			if (($sameHashA[$i]->position - $sameHashA[$i-1]->position) <= $distfragments)		{	
+			if (($sameHashA[$i]->position - $sameHashA[$i-1]->position) <= $distfragments)		{
 			// the hashes are close to each other - put hash into the cluster
 				$newcluster[] = $sameHashA[$i];
 			}
 			else {	// hashes are far from each other - wrap up the  old cluster
 				if (sizeof($newcluster) >= $minclustersize)	{
 					$clustersA[]= $newcluster;
-				}								
-				// create a new cluster	
-				$newcluster = array();		
+				}
+				// create a new cluster
+				$newcluster = array();
 				// put the orphan into the new cluster
 				$newcluster[] = $sameHashA[$i];
-						
+
 			}
 			if (($i == ($sizeA -1)) and (sizeof($newcluster) >= $minclustersize)) {
 				// last hash
 				$clustersA[]= $newcluster;
 			}
-		} else {	
+		} else {
 			// put the first hash into the cluster
-			$newcluster[] = $sameHashA[0];			
+			$newcluster[] = $sameHashA[0];
 		}
 	}
-		
+
 	// coloring: step 3 - add colors to each cluster
 	$colorsA = array ();
 		// initilize colors
@@ -241,18 +241,18 @@
             }
         }
 		// add colors to the cluster
-		$textA = colorer($textA, $startPos, $endPos, $colorsA[$i]);		
+		$textA = colorer($textA, $startPos, $endPos, $colorsA[$i]);
 	}
-	
-	// get the content of the second document 
-	
+
+	// get the content of the second document
+
 	$textB = stripslashes($submB->content);
 	//$textB = ($submB->content);
-	
+
 	// add colors to doc B
 	$sameHashB = array ();
-	
-	// coloring for doc B: step 1 - get same hashes	
+
+	// coloring for doc B: step 1 - get same hashes
 	// this has to be done in a separate loop to make sure those hashes are ordered by position
 	foreach ($hashesB as $hashB) {		// look for same hash in the array  B
 		foreach ($sameHashA as $hashA){
@@ -269,30 +269,30 @@
 	$sizeB = sizeof($sameHashB);
 	for ($i=0; $i<$sizeB; $i++)	{
 		if ($i >0 ) {
-			if (($sameHashB[$i]->position - $sameHashB[$i-1]->position) <= $distfragments)		{	
+			if (($sameHashB[$i]->position - $sameHashB[$i-1]->position) <= $distfragments)		{
 			// the hashes are close to each other - put hash into the cluster
 				$newcluster[] = $sameHashB[$i];
 			}
 			else {	// hashes are far from each other - wrap up the  old cluster
 				if (sizeof($newcluster) >= $minclustersize)	{
 					$clustersB[]= $newcluster;
-				}								
-				// create a new cluster	
-				$newcluster = array();		
+				}
+				// create a new cluster
+				$newcluster = array();
 				// put the orphan into the new cluster
 				$newcluster[] = $sameHashB[$i];
-						
+
 			}
 			if (($i == ($sizeB -1)) and (sizeof($newcluster) >= $minclustersize)) {
 				// last hash
 				$clustersB[]= $newcluster;
 			}
-		} else {	
+		} else {
 			// put the first hash into the cluster
-			$newcluster[] = $sameHashB[0];			
+			$newcluster[] = $sameHashB[0];
 		}
 	}
-		
+
 	// coloring: step 3 - add colors to each cluster
 	$colorsB = array ();
 		// initilize colors
@@ -329,7 +329,7 @@
             }
         }
 		// add colors to the cluster
-		$textB = colorer($textB, $startPos, $endPos, $colorsB[$i]);		
+		$textB = colorer($textB, $startPos, $endPos, $colorsB[$i]);
 	}
 
 	// create and display  2-column table to compare two documents
@@ -338,7 +338,7 @@
     {
 		if (! $studentA = $DB->get_record("files", array("id" => $subA->file_id))) {
 			$strstudentA = get_string('name_unknown','plagiarism_crot');
-        } else {	
+        } else {
     			//sw
     			//sw end
 			$strstudentA = $studentA->author.":<br> ".$courseA->shortname.", ".$assignA->name;
@@ -354,12 +354,12 @@
 		}
 		$strstudentA = "Web document:<br>"."<a href=\"$wdoc->link\">$linkname</a>";
 	}
-	
+
 	// get name B
 	if (!$isWebB) {
 	if (! $studentB = $DB->get_record("files", array("id" => $subB->file_id))) {
 		$strstudentB = get_string('name_unknown','plagiarism_crot');
-		} 
+		}
 		else {
 //    			if (empty($studentA->author)){
 //    			    $studentB->author = print_r($studentB);
@@ -379,17 +379,17 @@
 	}
 ?>
 <STYLE><!--
-#example{scrollbar-3d-light-color:'#0084d8';scrollbar-arrow-color:'black';scrollbar-base-color:'#00568c';scrollbar-dark-shadow-color:'';scrollbar-face-color:'';scrollbar-highlight-color:'';scrollbar-shadow-color:'';text-align:left;position:relative;width:404px; 
+#example{scrollbar-3d-light-color:'#0084d8';scrollbar-arrow-color:'black';scrollbar-base-color:'#00568c';scrollbar-dark-shadow-color:'';scrollbar-face-color:'';scrollbar-highlight-color:'';scrollbar-shadow-color:'';text-align:left;position:relative;width:404px;
 padding:2px;height:300px;overflow:scroll;border-width:2px;border-style:outset;background-color:lightgrey;}
 --></STYLE>
 <?php
-	$textA = "<div id=\"example\"><FONT SIZE=1>".preg_replace('/\n/',"<br>",$textA)."</font> </div>";
-	$textB = "<div id=\"example\"><FONT SIZE=1>".preg_replace('/\n/',"<br>",$textB)."</font> </div>";
+	$textA = "<div id=\"example\">".preg_replace('/\n/',"<br>",$textA)."</div>";
+	$textB = "<div id=\"example\">".preg_replace('/\n/',"<br>",$textB)."</div>";
 	$table = new html_table();
     $table->head  = array ($strstudentA, $strstudentB);
    	$table->align = array ("center", "center");
     $table->data[] = array ($textA, $textB);
     echo html_writer::table($table);
-	// footer 
+	// footer
     echo $OUTPUT->footer($courseA);
 ?>
