@@ -63,8 +63,8 @@ class update_reports extends \core\task\scheduled_task {
         }
 
         $sql_query = "SELECT cf.* FROM {plagiarism_crot_files} cf where cf.status = 'queue'";
-        $files = $DB->get_records_sql($sql_query);
-        var_dump($files);
+        $files = $DB->get_records_sql($sql_query, [], 0, 10);
+
         if (!empty($files)) {
             foreach ($files as $afile) {
                 try {
