@@ -76,7 +76,7 @@
     $PAGE->set_url('/plagiarism/crot/index.php', array('ida' => $ida, 'user_id'=>$user_id, 'cid' => $cid));
     echo $OUTPUT->header();
    
-    $plagiarismsettings = (array)get_config('plagiarism');
+    $plagiarismsettings = (array)get_config('plagiarism_crot');
     $threshold = $plagiarismsettings['crot_threshold'];
 		
 	// fill the table with results

@@ -11,7 +11,7 @@
 	require_once($CFG->dirroot."/course/lib.php");
 	
 	// globals
-    $plagiarismsettings = (array)get_config('plagiarism');
+    $plagiarismsettings = (array)get_config('plagiarism_crot');
 	$minclustersize = $plagiarismsettings['crot_clustersize'];
 	$distfragments  = $plagiarismsettings['crot_clusterdist'];
 	$allColors	= explode(",", $plagiarismsettings['crot_colours']);

@@ -175,7 +175,7 @@ function StripText ($atext, $subst)
 function GetFingerprint ($atext)
 {
 	global $CFG;
-    $plagiarismsettings = (array)get_config('plagiarism');
+    $plagiarismsettings = (array)get_config('plagiarism_crot');
     $gram_size = $plagiarismsettings['crot_grammarsize']; 
     $window_size = $plagiarismsettings['crot_windowsize'];
 	$hashes = array();
@@ -334,7 +334,7 @@ function strip_html_tags( $text )
 function getremotecontent($url)
 {
 	global $CFG;
-    $plagiarismsettings = (array)get_config('plagiarism');
+    $plagiarismsettings = (array)get_config('plagiarism_crot');
     $file_size = $plagiarismsettings['crot_max_file_size']; 
     	// analyze the extension (type) of the resource
     	// TODO it would be better to define type by the content marker in the stream

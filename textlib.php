@@ -25,7 +25,10 @@ function getTextFromZippedXML($archiveFile, $contentFile) {
 			$content=str_replace("<w:p ","\n<w:p ",$content);
 			// TODO add all entities and includes
 			// skip all errors and warnings
-			$xml = DOMDocument::loadXML($content, LIBXML_NOENT | LIBXML_XINCLUDE | LIBXML_NOERROR | LIBXML_NOWARNING);
+            // PHP Deprecated:  Non-static method DOMDocument::loadXML() should not be called statically in /home/moodle/www/devel/plagiarism/crot/textlib.php on line 28
+            // starting local search
+            $xml=new DOMDocument();
+			$xml->loadXML($content, LIBXML_NOENT | LIBXML_XINCLUDE | LIBXML_NOERROR | LIBXML_NOWARNING);
 			// return data without wml tags
 			return strip_tags($xml->saveXML());
 		} else {echo "Not found!";}
@@ -39,7 +42,7 @@ function getTextFromZippedXML($archiveFile, $contentFile) {
 
 // functions rtf_isPlainText and rtf2text
 // support RTF files
-// 
+//
 // thanks to DonRamon http://habrahabr.ru/blogs/php/70119/
 
 function rtf_isPlainText($s) {
@@ -125,10 +128,10 @@ function rtf2text($filename) {
                         break;
 
                         case "par": case "page": case "column": case "line": case "lbr":
-                            $toText .= "\n"; 
+                            $toText .= "\n";
                         break;
                         case "emspace": case "enspace": case "qmspace":
-                            $toText .= " "; 
+                            $toText .= " ";
                         break;
                         case "tab": $toText .= "\t"; break;
 
@@ -165,16 +168,16 @@ function rtf2text($filename) {
                 array_pop($stack);
                 $j--;
             break;
-            // 
+            //
             case '\0': case '\r': case '\f': case '\n': break;
-            // 
+            //
             default:
                 if (rtf_isPlainText($stack[$j]))
                     $document .= $c;
             break;
         }
     }
-    // 				
+    //
     return $document;
 }// end rtf2text
 
@@ -202,7 +205,7 @@ function decodeAsciiHex($input) {
 
         switch($c) {
             case '\0': case '\t': case '\r': case '\f': case '\n': case ' ': break;
-            case '%': 
+            case '%':
                 $isComment = true;
             break;
 
@@ -234,7 +237,7 @@ function decodeAscii85($input) {
 
     $isComment = false;
     $ords = array();
-    
+
     for($i = 0, $state = 0; $i < strlen($input) && $input[$i] != '~'; $i++) {
         $c = $input[$i];
 
@@ -286,7 +289,7 @@ function decodeFlate($input) {
 }
 
 function getObjectOptions($object) {
-    // We need to get current object attrbutes. These attributes are 
+    // We need to get current object attrbutes. These attributes are
     // located between << and >>. Each option starts with /.
     $options = array();
     if (preg_match("#<<(.*)>>#ismU", $object, $options)) {
@@ -358,12 +361,12 @@ function getDirtyTexts(&$texts, $textContainers) {
     }
 }
 function getCharTransformations(&$transformations, $stream) {
-    // Oh Mama Mia! As far as I know nobody did it before. At least not in the open source. 
+    // Oh Mama Mia! As far as I know nobody did it before. At least not in the open source.
     // We are going to have some fun now - search in symbol transformation streams.
     // Under transforation I mean conversion of ony symbol to hex form or even to some kind of sequence.
 
     // We need 	all the attributes that we can find in the current stream.
-    // Data between  beginbfchar and endbfchar transform one hex-code intn another (or sequence of codes) 
+    // Data between  beginbfchar and endbfchar transform one hex-code intn another (or sequence of codes)
     // separately. Between beginbfrange and endbfrange the transformation of data sequences is taking place
     // and it reduces the number of definitions.
     preg_match_all("#([0-9]+)\s+beginbfchar(.*)endbfchar#ismU", $stream, $chars, PREG_SET_ORDER);
@@ -388,7 +391,7 @@ function getCharTransformations(&$transformations, $stream) {
     //   till  <0020>, that will be substituted with <0a20>.
     // OR
     // - <0000> <0002> [<abcd> <01234567> <8900>] -> here it works in a bit different way. We need to look how
-    //   many elemants are located between  <0000> and <0002> (its actually three including 0001). After it we assign to each element 
+    //   many elemants are located between  <0000> and <0002> (its actually three including 0001). After it we assign to each element
     //   a corresponding value from [ ]: 0000 -> abcd, 0001 -> 0123 4567, а 0002 -> 8900.
     for ($j = 0; $j < count($ranges); $j++) {
         // We need to cross check the number of elements for transofrmation.
@@ -413,7 +416,7 @@ function getCharTransformations(&$transformations, $stream) {
                 $from = hexdec($map[1]);
                 $to = hexdec($map[2]);
                 $parts = preg_split("#\s+#", trim($map[3]));
-                
+
                 // Loop through data and assign the new values accordingly.
                 for ($m = $from, $n = 0; $m <= $to && $n < count($parts); $m++, $n++)
                     $transformations[sprintf("%04X", $m)] = sprintf("%04X", hexdec($parts[$n]));
@@ -458,7 +461,7 @@ function getTextUsingTransformations($texts, $transformations) {
                     for ($k = 0; $k < count($hexs); $k++) {
                         // if there are less then 4 symbols then the manual says that we need to add zeros after them
                         $chex = str_pad($hexs[$k], 4, "0");
-                        // Checking if current hex-code is already in transformations. 
+                        // Checking if current hex-code is already in transformations.
                         // If this is the case change this piece to the required.
                         if (isset($transformations[$chex]))
                             $chex = $transformations[$chex];
@@ -490,7 +493,7 @@ function getTextUsingTransformations($texts, $transformations) {
                     elseif ($c2 == "t") $plain .= '\t';
                     elseif ($c2 == "b") $plain .= '\b';
                     elseif ($c2 == "f") $plain .= '\f';
-                    // It might happen that a digit follows after \ . It may be up to 3 of them. 
+                    // It might happen that a digit follows after \ . It may be up to 3 of them.
                     // They represent sybmol code in octal system. Lets parse them.
                     elseif ($c2 >= '0' && $c2 <= '9') {
                         // We need 3 digits. No more than 3. Digits only.
@@ -529,7 +532,7 @@ function pdf2text($filename) {
         return "";
 
     // First iteration. We need to get all the text data from file.
-    // We'll get only "raw" data after the firs iteration. These data will include positioning, 
+    // We'll get only "raw" data after the firs iteration. These data will include positioning,
     // hex entries, etc.
     $transformations = array();
     $texts = array();
@@ -542,22 +545,22 @@ function pdf2text($filename) {
     for ($i = 0; $i < count($objects); $i++) {
         $currentObject = $objects[$i];
 
-        // Check if there is data stream in the current object. 
+        // Check if there is data stream in the current object.
         // Almost all the time it will be compressed with gzip.
         if (preg_match("#stream(.*)endstream#ismU", $currentObject, $stream)) {
             $stream = ltrim($stream[1]);
 
-            // Read the attributes of this object. We are looking only 
+            // Read the attributes of this object. We are looking only
             // for text, so we have to do minimal cuts to improve the speed
             $options = getObjectOptions($currentObject);
             if (!(empty($options["Length1"]) && empty($options["Type"]) && empty($options["Subtype"])))
                 continue;
 
             // So, we "may" have text in from of us. Lets decode it from binary file to get the plain text.
-            $data = getDecodedStream($stream, $options); 
+            $data = getDecodedStream($stream, $options);
             if (strlen($data)) {
-                // We need to find text container in the current stream. 
-                // If we will be able to get it the raw text we found will be added to the previous findings. 
+                // We need to find text container in the current stream.
+                // If we will be able to get it the raw text we found will be added to the previous findings.
                 if (preg_match_all("#BT(.*)ET#ismU", $data, $textContainers)) {
                     $textContainers = @$textContainers[1];
                     getDirtyTexts($texts, $textContainers);
@@ -568,7 +571,7 @@ function pdf2text($filename) {
         }
     }
 
-    // After the preliminary parsing of  pdf-document we need to parse 
+    // After the preliminary parsing of  pdf-document we need to parse
     // the text blocks we got in the context of simbolic transformations. Return the result after we done.
     return getTextUsingTransformations($texts, $transformations);
 }
@@ -579,14 +582,14 @@ function pdf2text($filename) {
 // E-mail: alex@rembish.ru
 // Copyright 2009
 
-// so my little firends, below you can see class that works with WCBFF (Windows Compound Binary File Format). 
-// Why do we need it? This format serves as a basement for such "delicious" formats as .doc, .xls и .ppt. 
+// so my little firends, below you can see class that works with WCBFF (Windows Compound Binary File Format).
+// Why do we need it? This format serves as a basement for such "delicious" formats as .doc, .xls и .ppt.
 // Lets see how it looks like
 class cfb {
     // We gonna read the content of the file we need to decode into this variable.
     protected $data = "";
 
-    // Sizes of FAT sector (1 << 9 = 512), Mini FAT sector (1 << 6 = 64) and maximum size 
+    // Sizes of FAT sector (1 << 9 = 512), Mini FAT sector (1 << 6 = 64) and maximum size
     // of the stream that could be written into a miniFAT.
     protected $sectorShift = 9;
     protected $miniSectorShift = 6;
@@ -646,10 +649,10 @@ class cfb {
         // read the structure of "directories" within the file
         $this->readDirectoryStructure();
 
-        // Finally we need to check the root entry in the file structure. 
-        // This stream is required ot be in a file at least because it has a link 
+        // Finally we need to check the root entry in the file structure.
+        // This stream is required ot be in a file at least because it has a link
         // to file's miniFAT that we gonna read into $this->miniFAT
-        
+
         $reStreamID = $this->getStreamIdByName("Root Entry");
         if ($reStreamID === false) { return false; }
         $this->miniFAT = $this->getStreamById($reStreamID, true);
@@ -660,7 +663,7 @@ class cfb {
         // After all this we should be able to work with any of the "upper" formats from Microsoft such as doc, xls или ppt.
     }
 
-    // Function that looks for stream number in the directory structure by its name. 
+    // Function that looks for stream number in the directory structure by its name.
     // It returns false if nothing was found.
     public function getStreamIdByName($name) {
         for($i = 0; $i < count($this->fatEntries); $i++) {
@@ -700,7 +703,7 @@ class cfb {
             // Second option - large piece - read it from FAT.
             // Get the sector size  - 512 (or 4096 for new versions)
             $ssize = 1 << $this->sectorShift;
-            
+
             do {
                 // Getting the offset in the file (taking into account that there is a header of 512 bytes in the begining)
                 $start = ($from + 1) << $this->sectorShift;
@@ -780,7 +783,7 @@ class cfb {
         while($this->DIFAT[count($this->DIFAT) - 1] == self::FREESECT)
             array_pop($this->DIFAT);
     }
-    // So, we done with reading DIFAT. Now chains of FAT sectors should be converted 
+    // So, we done with reading DIFAT. Now chains of FAT sectors should be converted
     // Lets go further.
     private function readFATChains() {
         // Sector size
@@ -806,7 +809,7 @@ class cfb {
 
         // Looking for the first sector with MiniFAT- sequences
         $from = $this->fMiniFAT;
-        // If MiniFAT appears to be in file then 
+        // If MiniFAT appears to be in file then
         while ($from != self::ENDOFCHAIN) {
             // Looking for the offset to the sector with MiniFat-sequence
             $start = ($from + 1) << $this->sectorShift;
@@ -818,7 +821,7 @@ class cfb {
         }
     }
 
-    // The most important functions that reads structure of "files" of such a type 
+    // The most important functions that reads structure of "files" of such a type
     // All the FS objects are written into this structure.
     private function readDirectoryStructure() {
         // get the 1st sector with "files" in file system
@@ -874,81 +877,81 @@ class cfb {
         return trim($out);
     }
 
-    protected function unicode_to_utf8($in, $check = false) { 
-        $out = ""; 
-        if ($check && strpos($in, chr(0)) !== 1) { 
-            while (($i = strpos($in, chr(0x13))) !== false) { 
-                $j = strpos($in, chr(0x15), $i + 1); 
-                if ($j === false) 
-                    break; 
+    protected function unicode_to_utf8($in, $check = false) {
+        $out = "";
+        if ($check && strpos($in, chr(0)) !== 1) {
+            while (($i = strpos($in, chr(0x13))) !== false) {
+                $j = strpos($in, chr(0x15), $i + 1);
+                if ($j === false)
+                    break;
 
-                $in = substr_replace($in, "", $i, $j - $i); 
-            } 
-            for ($i = 0; $i < strlen($in); $i++) { 
-                if (ord($in[$i]) >= 32) {} 
-                elseif ($in[$i] == ' ' || $in[$i] == '\n') {} 
-                else 
-                    $in = substr_replace($in, "", $i, 1); 
-            } 
-            $in = str_replace(chr(0), "", $in); 
+                $in = substr_replace($in, "", $i, $j - $i);
+            }
+            for ($i = 0; $i < strlen($in); $i++) {
+                if (ord($in[$i]) >= 32) {}
+                elseif ($in[$i] == ' ' || $in[$i] == '\n') {}
+                else
+                    $in = substr_replace($in, "", $i, 1);
+            }
+            $in = str_replace(chr(0), "", $in);
 
-            return $in; 
-        } elseif ($check) { 
-            while (($i = strpos($in, chr(0x13).chr(0))) !== false) { 
-                $j = strpos($in, chr(0x15).chr(0), $i + 1); 
-                if ($j === false) 
-                    break; 
+            return $in;
+        } elseif ($check) {
+            while (($i = strpos($in, chr(0x13).chr(0))) !== false) {
+                $j = strpos($in, chr(0x15).chr(0), $i + 1);
+                if ($j === false)
+                    break;
 
-                $in = substr_replace($in, "", $i, $j - $i); 
-            } 
-            $in = str_replace(chr(0).chr(0), "", $in); 
-        } 
+                $in = substr_replace($in, "", $i, $j - $i);
+            }
+            $in = str_replace(chr(0).chr(0), "", $in);
+        }
 
         // Loop thriugh 2 byte words
-        $skip = false; 
-        for ($i = 0; $i < strlen($in); $i += 2) { 
-            $cd = substr($in, $i, 2); 
-            if ($skip) { 
-                if (ord($cd[1]) == 0x15 || ord($cd[0]) == 0x15) 
-                    $skip = false; 
-                continue; 
-            } 
+        $skip = false;
+        for ($i = 0; $i < strlen($in); $i += 2) {
+            $cd = substr($in, $i, 2);
+            if ($skip) {
+                if (ord($cd[1]) == 0x15 || ord($cd[0]) == 0x15)
+                    $skip = false;
+                continue;
+            }
 
             // If upper byte is  0 then this is ANSI
-           if (ord($cd[1]) == 0) { 
-                // If ASCII value is higher than 32 we will write it as it is. 
-                if (ord($cd[0]) >= 32) 
-                    $out .= $cd[0]; 
-                elseif ($cd[0] == ' ' || $cd[0] == '\n') 
-                    $out .= $cd[0]; 
-                elseif (ord($cd[0]) == 0x13) 
-                    $skip = true; 
-                else { 
-                    continue; 
-                    // В противном случае проверяем символы на внедрённые команды (список можно 
-                    // дополнить и пополнить). 
-                    switch (ord($cd[0])) { 
-                        case 0x0D: case 0x07: $out .= "\n"; break; 
-                        case 0x08: case 0x01: $out .= ""; break; 
-                        case 0x13: $out .= "HYPER13"; break; 
-                        case 0x14: $out .= "HYPER14"; break; 
-                        case 0x15: $out .= "HYPER15"; break; 
-                        default: $out .= " "; break; 
-                    } 
-                } 
-            } else { // Иначе преобразовываем в HTML entity 
-                if (ord($cd[1]) == 0x13) { 
-                    echo "@"; 
-                    $skip = true; 
-                    continue; 
-                } 
-                $out .= "&#x".sprintf("%04x", $this->getShort(0, $cd)).";"; 
-            } 
-        } 
+           if (ord($cd[1]) == 0) {
+                // If ASCII value is higher than 32 we will write it as it is.
+                if (ord($cd[0]) >= 32)
+                    $out .= $cd[0];
+                elseif ($cd[0] == ' ' || $cd[0] == '\n')
+                    $out .= $cd[0];
+                elseif (ord($cd[0]) == 0x13)
+                    $skip = true;
+                else {
+                    continue;
+                    // В противном случае проверяем символы на внедрённые команды (список можно
+                    // дополнить и пополнить).
+                    switch (ord($cd[0])) {
+                        case 0x0D: case 0x07: $out .= "\n"; break;
+                        case 0x08: case 0x01: $out .= ""; break;
+                        case 0x13: $out .= "HYPER13"; break;
+                        case 0x14: $out .= "HYPER14"; break;
+                        case 0x15: $out .= "HYPER15"; break;
+                        default: $out .= " "; break;
+                    }
+                }
+            } else { // Иначе преобразовываем в HTML entity
+                if (ord($cd[1]) == 0x13) {
+                    echo "@";
+                    $skip = true;
+                    continue;
+                }
+                $out .= "&#x".sprintf("%04x", $this->getShort(0, $cd)).";";
+            }
+        }
 
         // and return the results
-        return $out; 
-    } 
+        return $out;
+    }
 
     // Support function to geto some bytes from the string
     // taking into account order of bytes and converting values into a number.
@@ -974,26 +977,26 @@ class cfb {
     protected function getLong($from, $data = null) {
         return $this->getSomeBytes($data, $from, 4);
     }
-} 
+}
 // Reading text from DOC
 // Версия 0.4
 // Author: Алексей Рембиш a.k.a Ramon
-// E-mail: 				
+// E-mail:
 // Copyright 2009
 // Comments translated by Sergey Butakov
 
 
-// Class to work with Microsoft Word Document (or just doc). It extends 
+// Class to work with Microsoft Word Document (or just doc). It extends
 // Windows Compound Binary File Format. Lets try to find text here
 
 class doc extends cfb {
-    // This function extends parse funciton and returns text from the file. 
+    // This function extends parse funciton and returns text from the file.
     // If returns flase if something went wrong.
     public function parse() {
         parent::parse();
 
         // To read a DOC file we need 2 streams - WordDocument and 0Table or
-        // 1Table depending on the situation. Lets get hte first stream. 
+        // 1Table depending on the situation. Lets get hte first stream.
         // It contains pieces of text we need to collect.
         $wdStreamID = $this->getStreamIdByName("WordDocument");
         if ($wdStreamID === false) { return false; }
@@ -1004,7 +1007,7 @@ class doc extends cfb {
         // Next we need to get something from  FIB - special block named
         // File Information Block that is located in the beginning of WordDocument stream.
         $bytes = $this->getShort(0x000A, $wdStream);
-        				
+
         // Read which table we need to read: number 0 or number 1.
         // To do so we need to read a small bit from the header.
         $fWhichTblStm = ($bytes & 0x0200) == 0x0200;
@@ -1040,10 +1043,10 @@ class doc extends cfb {
         $lcbPieceTable = 0;
         $pieceTable = "";
 
-        // Well... this is the most exciting part. There is not too much of documentation on the web site about  
-        // what can be found before  pieceTable in the  CLX. So we will do the total search looking 
+        // Well... this is the most exciting part. There is not too much of documentation on the web site about
+        // what can be found before  pieceTable in the  CLX. So we will do the total search looking
         // for the possible beginning of pieceTable (it must start with  0х02), and read the following 4 bytes
-        // - size of pieceTable. If the actual size equial to size writtent in the offset then Bingo! we found pieceTable. 
+        // - size of pieceTable. If the actual size equial to size writtent in the offset then Bingo! we found pieceTable.
         // If not continue the search.
 
         $from = 0;
@@ -1159,7 +1162,7 @@ class ppt extends cfb {
         $cuStreamID = $this->getStreamIdByName("Current User");
         if ($cuStreamID === false) { return false; }
 
-        // Get this stream and check hash (do we really have PowerPoint-presentation?) 
+        // Get this stream and check hash (do we really have PowerPoint-presentation?)
         // and read the offset to the first ocurence of UserEditAtom
         $cuStream = $this->getStreamById($cuStreamID);
         if ($this->getLong(12, $cuStream) == 0xF3D1C4DF) { return false; }
@@ -1238,7 +1241,7 @@ class ppt extends cfb {
             $block = $this->getRecord($slideList, $i);
             switch($this->getRecordType($slideList, $i)) {
                 case 0x03F3: # RT_SlidePersistAtom
-                    // The worst case: we have pointer to a slide. If this is the case 
+                    // The worst case: we have pointer to a slide. If this is the case
                     // we have to get this slide from PersistDirectory.
                     $pid = $this->getLong(0, $block);
                     $slide = $this->getRecord($ppdStream, @$persistDirEntry[$pid], 0x03EE);
@@ -1259,7 +1262,7 @@ class ppt extends cfb {
                     while(preg_match("#(\xA8|\xA0)\x0F#", $drawing, $pocket, PREG_OFFSET_CAPTURE, $from)) {
                         $pocket = @$pocket[1];
                         // We must check that block header starts with 00, otherwise it may happen that we found
-                        //  something in the middle of other data 
+                        //  something in the middle of other data
                         if (substr($drawing, $pocket[1] - 2, 2) == "\x00\x00") {
                             // Read either plain or Unicode text.
                             if (ord($pocket[0]) == 0xA8)
@@ -1291,7 +1294,7 @@ class ppt extends cfb {
     }
 
     // Additional funciton that defines the lingth of the current internal structure.
-    // It gets the input stream, offset and type of the structure to read. 
+    // It gets the input stream, offset and type of the structure to read.
     // Type will be used ot check the actual structure we read.
     private function getRecordLength($stream, $offset, $recType = null) {
         $rh = substr($stream, $offset, 8);
@@ -1305,7 +1308,7 @@ class ppt extends cfb {
         return $this->getShort(2, $rh);
     }
     // Get the record by its offset. Attention, the header doesn't go back
-    
+
     private function getRecord($stream, $offset, $recType = null) {
         $length = $this->getRecordLength($stream, $offset, $recType);
         if ($length === false)
@@ -1319,6 +1322,5 @@ function ppt2text($filename) {
     $ppt = new ppt;
     $ppt->read($filename);
     return $ppt->parse();
-} 
+}
 
-?>

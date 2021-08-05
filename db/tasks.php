@@ -1,5 +1,4 @@
 <?php
-
 // This file is part of Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
@@ -15,9 +14,25 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-$plugin->version =  2013063000;
-$plugin->requires = 2012062600;
-$plugin->maturity =MATURITY_BETA;
-$plugin->release ='2.3.0.2';
-$plugin->component = 'plagiarism_crot';
-$plugin->cron     = 0;
+/**
+ * @package   plagiarism_turnitin
+ * @copyright 2012 iParadigms LLC
+ */
+
+/**
+ * @package plagiarism_turnitin
+ */
+
+defined('MOODLE_INTERNAL') || die();
+
+$tasks = array(
+    array(
+        'classname' => 'plagiarism_crot\task\update_reports',
+        'blocking' => 0,
+        'minute' => '*/5',
+        'hour' => '*',
+        'day' => '*',
+        'dayofweek' => '*',
+        'month' => '*'
+    ),
+);

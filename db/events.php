@@ -1,10 +1,21 @@
 <?php
 
-$handlers = array (
 
-/*
- * Event Handlers
- */
+$observers = array (
+    array(
+        'eventname' => '\mod_assign\event\assessable_submitted',
+        'callback'  => 'plagiarism_crot_observer::crot_event_file_uploaded'
+    ),
+    array(
+        'eventname' => '\core\event\course_module_deleted',
+        'callback'  => 'plagiarism_crot_observer::crot_event_mod_deleted'
+    ),
+    array(
+        'eventname' => '\core\event\course_reset_ended',
+        'callback'  => 'plagiarism_crot_observer::crot_event_mod_deleted',
+    )
+);
+/*$handlers = array (
     'assessable_file_uploaded' => array (
         'handlerfile'      => '/plagiarism/crot/lib.php',
         'handlerfunction'  => 'crot_event_file_uploaded',
@@ -35,5 +46,4 @@ $handlers = array (
         'handlerfunction'  => 'crot_event_mod_deleted',
         'schedule'         => 'cron'
     ),
-
-);
+);*/
