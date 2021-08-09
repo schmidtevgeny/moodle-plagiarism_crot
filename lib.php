@@ -134,73 +134,73 @@ class plagiarism_plugin_crot extends plagiarism_plugin {
         return $output;
     }
 
-    /**
-     * hook to save plagiarism specific settings on a module settings page
-     * хук для сохранения настроек, специфичных для плагиата, на странице настроек модуля
-     * @param object $data - data from an mform submission.
-    */
-    public function save_form_elements($data) {
-        global $DB;
-        $plagiarismsettings = (array)get_config('plagiarism_crot');
-        if (!empty($plagiarismsettings['enabled'])) {
-            if (isset($data->enabled)) {
-                //array of posible plagiarism config options.
-                $plagiarismelements = $this->config_options();
-                //first get existing values
-                $existingelements = $DB->get_records_menu('plagiarism_crot_config', ['cm' => $data->coursemodule], '', 'name,id');
-                foreach ($plagiarismelements as $element) {
-                    $newelement = new stdClass();
-                    $newelement->cm = $data->coursemodule;
-                    $newelement->name = $element;
-                    $newelement->value = (isset($data->$element) ? $data->$element : 0);
-                    if (isset($existingelements[$element])) { //update
-                        $newelement->id = $existingelements[$element];
-                        $DB->update_record('plagiarism_crot_config', $newelement);
-                    } else { //insert
-                        $DB->insert_record('plagiarism_crot_config', $newelement);
-                    }
-                }
+    // /**
+    //  * hook to save plagiarism specific settings on a module settings page
+    //  * хук для сохранения настроек, специфичных для плагиата, на странице настроек модуля
+    //  * @param object $data - data from an mform submission.
+    // */
+    // public function save_form_elements($data) {
+    //     global $DB;
+    //     $plagiarismsettings = (array)get_config('plagiarism_crot');
+    //     if (!empty($plagiarismsettings['enabled'])) {
+    //         if (isset($data->enabled)) {
+    //             //array of posible plagiarism config options.
+    //             $plagiarismelements = $this->config_options();
+    //             //first get existing values
+    //             $existingelements = $DB->get_records_menu('plagiarism_crot_config', ['cm' => $data->coursemodule], '', 'name,id');
+    //             foreach ($plagiarismelements as $element) {
+    //                 $newelement = new stdClass();
+    //                 $newelement->cm = $data->coursemodule;
+    //                 $newelement->name = $element;
+    //                 $newelement->value = (isset($data->$element) ? $data->$element : 0);
+    //                 if (isset($existingelements[$element])) { //update
+    //                     $newelement->id = $existingelements[$element];
+    //                     $DB->update_record('plagiarism_crot_config', $newelement);
+    //                 } else { //insert
+    //                     $DB->insert_record('plagiarism_crot_config', $newelement);
+    //                 }
+    //             }
+    //
+    //         }
+    //     }
+    // }
 
-            }
-        }
-    }
-
-    /**
-     * hook to add plagiarism specific settings to a module settings page
-     * хук для добавления настроек, специфичных для плагиата, на страницу настроек модуля
-     * @param object $mform - Moodle form
-     * @param object $context - current context
-     */
-    public function get_form_elements_module($mform, $context, $modulename = '') {
-        global $DB;
-        $plagiarismsettings = (array)get_config('plagiarism_crot');
-        if (!empty($plagiarismsettings['enabled'])) {
-            $cmid = optional_param('update', 0, PARAM_INT); //there doesn't seem to be a way to obtain the current cm a better way - $this->_cm is not available here.
-            if (!empty($cmid)) {
-                $plagiarismvalues = $DB->get_records_menu('plagiarism_crot_config', ['cm' => $cmid], '', 'name,value');
-            }
-            $plagiarismelements = $this->config_options();
-
-            $ynoptions = [0 => get_string('no'), 1 => get_string('yes')];
-            $mform->addElement('header', 'crotdesc', get_string('crot', 'plagiarism_crot'));
-            $mform->addHelpButton('crotdesc', 'crot', 'plagiarism_crot');
-            $mform->addElement('select', 'enabled', get_string("usecrot", "plagiarism_crot"), $ynoptions);
-            $mform->addElement('select', 'crot_local', get_string("comparestudents", "plagiarism_crot"), $ynoptions);
-            $mform->disabledIf('crot_local', 'enabled', 'eq', 0);
-            $mform->setDefault('crot_local', '1');
-            $mform->addElement('select', 'crot_global', get_string("compareinternet", "plagiarism_crot"), $ynoptions);
-            $mform->disabledIf('crot_global', 'enabled', 'eq', 0);
-
-            foreach ($plagiarismelements as $element) {
-                if (isset($plagiarismvalues[$element])) {
-                    $mform->setDefault($element, $plagiarismvalues[$element]);
-                }
-            }
-        }
-        //Add elements to form using standard mform like:
-        //$mform->addElement('hidden', $element);
-        //$mform->disabledIf('plagiarism_draft_submit', 'var4', 'eq', 0);
-    }
+    // /**
+    //  * hook to add plagiarism specific settings to a module settings page
+    //  * хук для добавления настроек, специфичных для плагиата, на страницу настроек модуля
+    //  * @param object $mform - Moodle form
+    //  * @param object $context - current context
+    //  */
+    // public function get_form_elements_module($mform, $context, $modulename = '') {
+    //     global $DB;
+    //     $plagiarismsettings = (array)get_config('plagiarism_crot');
+    //     if (!empty($plagiarismsettings['enabled'])) {
+    //         $cmid = optional_param('update', 0, PARAM_INT); //there doesn't seem to be a way to obtain the current cm a better way - $this->_cm is not available here.
+    //         if (!empty($cmid)) {
+    //             $plagiarismvalues = $DB->get_records_menu('plagiarism_crot_config', ['cm' => $cmid], '', 'name,value');
+    //         }
+    //         $plagiarismelements = $this->config_options();
+    //
+    //         $ynoptions = [0 => get_string('no'), 1 => get_string('yes')];
+    //         $mform->addElement('header', 'crotdesc', get_string('crot', 'plagiarism_crot'));
+    //         $mform->addHelpButton('crotdesc', 'crot', 'plagiarism_crot');
+    //         $mform->addElement('select', 'enabled', get_string("usecrot", "plagiarism_crot"), $ynoptions);
+    //         $mform->addElement('select', 'crot_local', get_string("comparestudents", "plagiarism_crot"), $ynoptions);
+    //         $mform->disabledIf('crot_local', 'enabled', 'eq', 0);
+    //         $mform->setDefault('crot_local', '1');
+    //         $mform->addElement('select', 'crot_global', get_string("compareinternet", "plagiarism_crot"), $ynoptions);
+    //         $mform->disabledIf('crot_global', 'enabled', 'eq', 0);
+    //
+    //         foreach ($plagiarismelements as $element) {
+    //             if (isset($plagiarismvalues[$element])) {
+    //                 $mform->setDefault($element, $plagiarismvalues[$element]);
+    //             }
+    //         }
+    //     }
+    //     //Add elements to form using standard mform like:
+    //     //$mform->addElement('hidden', $element);
+    //     //$mform->disabledIf('plagiarism_draft_submit', 'var4', 'eq', 0);
+    // }
 
     /**
      * hook to allow a disclosure to be printed notifying users what will happen with their submission
@@ -220,7 +220,12 @@ class plagiarism_plugin_crot extends plagiarism_plugin {
         $plagiarismsettings = (array)get_config('plagiarism_crot');
         $formatoptions = new stdClass;
         $formatoptions->noclean = true;
-        return format_text($plagiarismsettings['crot_student_disclosure'], FORMAT_MOODLE, $formatoptions);
+        $outputhtml = $OUTPUT->box_start('generalbox boxaligncenter', 'intro');
+        $formatoptions = new stdClass;
+        $formatoptions->noclean = true;
+        $outputhtml .= format_text($plagiarismsettings['crot_student_disclosure'], FORMAT_MOODLE, $formatoptions);
+        $outputhtml .= $OUTPUT->box_end();
+        return $outputhtml;
 
     }
 
@@ -237,5 +242,77 @@ class plagiarism_plugin_crot extends plagiarism_plugin {
 
     public function config_options() {
         return ['enabled', 'crot_local', 'crot_global'];
+    }
+}
+function plagiarism_crot_coursemodule_standard_elements($formwrapper, $mform) {
+    global $DB;
+    $plagiarismsettings = (array)get_config('plagiarism_crot');
+    if (!empty($plagiarismsettings['enabled'])) {
+        $cmid = optional_param('update', 0, PARAM_INT); //there doesn't seem to be a way to obtain the current cm a better way - $this->_cm is not available here.
+        if (!empty($cmid)) {
+            $plagiarismvalues = $DB->get_records_menu('plagiarism_crot_config', ['cm' => $cmid], '', 'name,value');
+        }
+        $plugin = new plagiarism_plugin_crot();
+        $plagiarismelements = $plugin->config_options();
+
+        $ynoptions = [0 => get_string('no'), 1 => get_string('yes')];
+        $mform->addElement('header', 'crotdesc', get_string('crot', 'plagiarism_crot'));
+        $mform->addHelpButton('crotdesc', 'crot', 'plagiarism_crot');
+        $mform->addElement('select', 'enabled', get_string("usecrot", "plagiarism_crot"), $ynoptions);
+        $mform->addElement('select', 'crot_local', get_string("comparestudents", "plagiarism_crot"), $ynoptions);
+        $mform->disabledIf('crot_local', 'enabled', 'eq', 0);
+        $mform->setDefault('crot_local', '1');
+        $mform->addElement('select', 'crot_global', get_string("compareinternet", "plagiarism_crot"), $ynoptions);
+        $mform->disabledIf('crot_global', 'enabled', 'eq', 0);
+
+        foreach ($plagiarismelements as $element) {
+            if (isset($plagiarismvalues[$element])) {
+                $mform->setDefault($element, $plagiarismvalues[$element]);
+            }
+        }
+    }
+}
+
+function plagiarism_crot_coursemodule_edit_post_actions($data, $course) {
+    global $DB;
+    $plugin = new plagiarism_plugin_crot();
+    $plagiarismsettings = (array)get_config('plagiarism_crot');
+    if (!empty($plagiarismsettings['enabled'])) {
+        if (isset($data->enabled)) {
+            //array of posible plagiarism config options.
+            $plagiarismelements = $plugin->config_options();
+            //first get existing values
+            $existingelements = $DB->get_records_menu('plagiarism_crot_config', ['cm' => $data->coursemodule], '', 'name,id');
+            foreach ($plagiarismelements as $element) {
+                $newelement = new stdClass();
+                $newelement->cm = $data->coursemodule;
+                $newelement->name = $element;
+                $newelement->value = (isset($data->$element) ? $data->$element : 0);
+                if (isset($existingelements[$element])) { //update
+                    $newelement->id = $existingelements[$element];
+                    $DB->update_record('plagiarism_crot_config', $newelement);
+                } else { //insert
+                    $DB->insert_record('plagiarism_crot_config', $newelement);
+                }
+            }
+        }
+    }
+    return $data;
+}
+function plagiarism_crot_extend_navigation_course($navigation, $course, $context) {
+    global $PAGE;
+    if (!$PAGE->course || $PAGE->course->id == SITEID) {
+        return null;
+    }
+    if (has_capability('mod/assignment:grade', context_course::instance($course->id))) {
+        $url = new moodle_url('/plagiarism/crot/menu.php', ['id' => $course->id]);
+        $settingsnode = navigation_node::create('CROT',
+            $url,
+            navigation_node::TYPE_SETTING,
+            null,
+            null,
+            new pix_icon('i/settings', ''));
+
+        $navigation->add_node($settingsnode);
     }
 }

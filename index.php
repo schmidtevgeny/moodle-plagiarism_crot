@@ -5,8 +5,8 @@
  *
  */
 
-	require_once("../../config.php");
-    global $CFG;
+require_once(dirname(__FILE__, 2) . '/../config.php');
+global $CFG;
 
 	require_once($CFG->dirroot."/course/lib.php");
 //	require_once($CFG->dirroot."/mod/assignment/lib.php");

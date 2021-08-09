@@ -5,7 +5,7 @@
  * this module compares two submissions side by side
  *
  */
-	require_once("../../config.php");
+require_once(dirname(__FILE__, 2) . '/../config.php');
 	global $CFG, $DB;
 	require_once($CFG->dirroot."/plagiarism/crot/locallib.php");
 	require_once($CFG->dirroot."/course/lib.php");
