@@ -64,9 +64,8 @@ if (($data = $mform->get_data()) && confirm_sesskey()) {
             test_global_search();
         }
         if ($field == 'registration' && $value == true) {
-            echo $OUTPUT->box("<b><a href=\"https://spreadsheets.google.com/viewform?formkey=dFRPVTRiSkNzSzI1cTVManUwNWVKZXc6MQ\" target=\"_new\">Please follow this link to register!</a></b>");
+            // echo $OUTPUT->box("<b><a href=\"https://spreadsheets.google.com/viewform?formkey=dFRPVTRiSkNzSzI1cTVManUwNWVKZXc6MQ\" target=\"_new\">Please follow this link to register!</a></b>");
         }
-
     }
 
     $OUTPUT->notification(get_string('savedconfigsuccess', 'plagiarism_crot'), '$OUTPUT->notificationsuccess');
@@ -143,3 +142,4 @@ echo $OUTPUT->box_start('generalbox boxaligncenter', 'intro');
 $mform->display();
 echo $OUTPUT->box_end();
 echo $OUTPUT->footer();
+// TODO: remake

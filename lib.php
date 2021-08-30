@@ -39,10 +39,10 @@ class plagiarism_plugin_crot extends plagiarism_plugin {
     public function get_all_system_config() {
         global $DB;
 
-        static $map = array();
+        static $map = [];
         if (empty($map)) {
             $records = $DB->get_records('config_plugins', [
-                'plugin'=>'plagiarism_crot'
+                'plugin' => 'plagiarism_crot',
             ]);
 
             foreach ($records as $record) {
@@ -52,6 +52,7 @@ class plagiarism_plugin_crot extends plagiarism_plugin {
 
         return $map;
     }
+
     /**
      * hook to allow plagiarism specific information to be displayed beside a submission
      * хук, позволяющий отображать информацию о плагиате рядом с отправленным материалом
@@ -62,13 +63,13 @@ class plagiarism_plugin_crot extends plagiarism_plugin {
     public function get_links($linkarray) {
         global $DB, $CFG, $PAGE;
         // echo '<pre>';
-        if (array_key_exists('forum', $linkarray))return '';
-        if (!array_key_exists('file', $linkarray))return '';
+        if (array_key_exists('forum', $linkarray)) return '';
+        if (!array_key_exists('file', $linkarray)) return '';
         $cmid = $linkarray['cmid'];
         $userid = $linkarray['userid'];
         $file = $linkarray['file'];
         $course = $linkarray['course'];
-        $output="";
+        $output = "";
         $cid = $course->id;
         if (empty($cid)) {
             $cid = $course;
@@ -81,20 +82,39 @@ class plagiarism_plugin_crot extends plagiarism_plugin {
                 if (!$crot_doc_rec = $DB->get_record("plagiarism_crot_documents", ["crot_submission_id" => $plagiarism_crot_files_rec->id])) {
                     $output .= '';// if there is no record in plagiarism_crot_documents about this file then nothing to show
                 } else {
-                    $sql_query = "SELECT max(number_of_same_hashes) as max FROM {$CFG->prefix}plagiarism_crot_spair WHERE submission_a_id ='$crot_doc_rec->id' OR  submission_b_id = '$crot_doc_rec->id'";
-                    if (!$similarity = $DB->get_record_sql($sql_query)) {// get maximum number of same hashes for the current document
-                        $output .= '<br><b>' . get_string('no_similarities', 'plagiarism_crot') . '</b>';
+                    $sql_query = "SELECT max(number_of_same_hashes) AS max 
+                                    FROM {plagiarism_crot_spair} 
+                                   WHERE submission_a_id = :submission_a_id
+                                         OR  submission_b_id = :submission_b_id";
+                    if (!$similarity = $DB->get_record_sql($sql_query, ['submission_a_id' => $crot_doc_rec->id, 'submission_b_id' => $crot_doc_rec->id])) {
+                        // get maximum number of same hashes for the current document
+                        $output .= html_writer::empty_tag('br') .
+                            html_writer::tag('b', get_string('no_similarities', 'plagiarism_crot'));
                     } else {
-                        $sql_query = "SELECT count(*) as cnt from {$CFG->prefix}plagiarism_crot_fingerprint where crot_doc_id = '$crot_doc_rec->id'";
-                        $numbertotal = $DB->get_record_sql($sql_query);// get total number of hashes for the current document
-                        $perc = round(($similarity->max / $numbertotal->cnt) * 100, 2);
-                        if ($numbertotal->cnt==0) $perc=0;
-                        if (has_capability('mod/assignment:grade', $PAGE->context)){
-                            $output .= "<br><b> <a href=\"../../plagiarism/crot/index.php?id_a=$crot_doc_rec->id&user_id=$userid&cid=$cid\">" .
-                                       get_string('col_similarity_score', 'plagiarism_crot').': '. $perc . "%</a></b>";
-                        }else {
-                            $output .= "<br><b> " .
-                                       get_string('col_similarity_score', 'plagiarism_crot').': '. $perc . "%</a></b>";
+                        $sql_query = "SELECT count(*) AS cnt 
+                                        FROM {plagiarism_crot_fingerprint} 
+                                       WHERE crot_doc_id = :crot_doc_id";
+                        $numbertotal = $DB->get_record_sql($sql_query, ['crot_doc_id' => $crot_doc_rec->id]);// get total number of hashes for the current document
+                        if ($numbertotal->cnt == 0) {
+                            $perc = 0;
+                        } else {
+                            $perc = round(($similarity->max / $numbertotal->cnt) * 100, 2);
+                        }
+
+                        if (has_capability('mod/assignment:grade', $PAGE->context)) {
+                            $output .= html_writer::empty_tag('br') .
+                                html_writer::tag('b',
+                                    html_writer::link(
+                                        new moodle_url('/plagiarism/crot/index.php',
+                                            ['id_a' => $crot_doc_rec->id, 'user_id' => $userid, 'cid' => $cid]),
+                                        get_string('col_similarity_score', 'plagiarism_crot') . ': ' . $perc . '%'
+                                    )
+                                );
+                        } else {
+                            $output .= html_writer::empty_tag('br') .
+                                html_writer::tag('b',
+                                    get_string('col_similarity_score', 'plagiarism_crot') . ': ' . $perc . '%'
+                                );
                         }
                     }
                 }
@@ -120,12 +140,12 @@ class plagiarism_plugin_crot extends plagiarism_plugin {
                         $sql_query = "SELECT count(*) as cnt from {$CFG->prefix}plagiarism_crot_fingerprint where crot_doc_id = '$crot_doc_rec->id'";
                         $numbertotal = $DB->get_record_sql($sql_query);// get total number of hashes for the current document
                         $perc = round(($similarity->max / $numbertotal->cnt) * 100, 2);
-                        if (has_capability('mod/assignment:grade', $PAGE->context)){
+                        if (has_capability('mod/assignment:grade', $PAGE->context)) {
                             $output .= "<br><b> <a href=\"../../plagiarism/crot/index.php?id_a=$crot_doc_rec->id&user_id=$userid&cid=$cid\">" .
-                                       get_string('col_similarity_score', 'plagiarism_crot').': '. $perc . "%</a></b>";
-                        }else {
+                                get_string('col_similarity_score', 'plagiarism_crot') . ': ' . $perc . "%</a></b>";
+                        } else {
                             $output .= "<br><b> " .
-                                       get_string('col_similarity_score', 'plagiarism_crot').': '. $perc . "%</a></b>";
+                                get_string('col_similarity_score', 'plagiarism_crot') . ': ' . $perc . "%</a></b>";
                         }
                     }
                 }
@@ -134,74 +154,6 @@ class plagiarism_plugin_crot extends plagiarism_plugin {
 
         return $output;
     }
-
-    // /**
-    //  * hook to save plagiarism specific settings on a module settings page
-    //  * хук для сохранения настроек, специфичных для плагиата, на странице настроек модуля
-    //  * @param object $data - data from an mform submission.
-    // */
-    // public function save_form_elements($data) {
-    //     global $DB;
-    //     $plagiarismsettings = (array)get_config('plagiarism_crot');
-    //     if (!empty($plagiarismsettings['enabled'])) {
-    //         if (isset($data->enabled)) {
-    //             //array of posible plagiarism config options.
-    //             $plagiarismelements = $this->config_options();
-    //             //first get existing values
-    //             $existingelements = $DB->get_records_menu('plagiarism_crot_config', ['cm' => $data->coursemodule], '', 'name,id');
-    //             foreach ($plagiarismelements as $element) {
-    //                 $newelement = new stdClass();
-    //                 $newelement->cm = $data->coursemodule;
-    //                 $newelement->name = $element;
-    //                 $newelement->value = (isset($data->$element) ? $data->$element : 0);
-    //                 if (isset($existingelements[$element])) { //update
-    //                     $newelement->id = $existingelements[$element];
-    //                     $DB->update_record('plagiarism_crot_config', $newelement);
-    //                 } else { //insert
-    //                     $DB->insert_record('plagiarism_crot_config', $newelement);
-    //                 }
-    //             }
-    //
-    //         }
-    //     }
-    // }
-
-    // /**
-    //  * hook to add plagiarism specific settings to a module settings page
-    //  * хук для добавления настроек, специфичных для плагиата, на страницу настроек модуля
-    //  * @param object $mform - Moodle form
-    //  * @param object $context - current context
-    //  */
-    // public function get_form_elements_module($mform, $context, $modulename = '') {
-    //     global $DB;
-    //     $plagiarismsettings = (array)get_config('plagiarism_crot');
-    //     if (!empty($plagiarismsettings['enabled'])) {
-    //         $cmid = optional_param('update', 0, PARAM_INT); //there doesn't seem to be a way to obtain the current cm a better way - $this->_cm is not available here.
-    //         if (!empty($cmid)) {
-    //             $plagiarismvalues = $DB->get_records_menu('plagiarism_crot_config', ['cm' => $cmid], '', 'name,value');
-    //         }
-    //         $plagiarismelements = $this->config_options();
-    //
-    //         $ynoptions = [0 => get_string('no'), 1 => get_string('yes')];
-    //         $mform->addElement('header', 'crotdesc', get_string('crot', 'plagiarism_crot'));
-    //         $mform->addHelpButton('crotdesc', 'crot', 'plagiarism_crot');
-    //         $mform->addElement('select', 'enabled', get_string("usecrot", "plagiarism_crot"), $ynoptions);
-    //         $mform->addElement('select', 'crot_local', get_string("comparestudents", "plagiarism_crot"), $ynoptions);
-    //         $mform->disabledIf('crot_local', 'enabled', 'eq', 0);
-    //         $mform->setDefault('crot_local', '1');
-    //         $mform->addElement('select', 'crot_global', get_string("compareinternet", "plagiarism_crot"), $ynoptions);
-    //         $mform->disabledIf('crot_global', 'enabled', 'eq', 0);
-    //
-    //         foreach ($plagiarismelements as $element) {
-    //             if (isset($plagiarismvalues[$element])) {
-    //                 $mform->setDefault($element, $plagiarismvalues[$element]);
-    //             }
-    //         }
-    //     }
-    //     //Add elements to form using standard mform like:
-    //     //$mform->addElement('hidden', $element);
-    //     //$mform->disabledIf('plagiarism_draft_submit', 'var4', 'eq', 0);
-    // }
 
     /**
      * hook to allow a disclosure to be printed notifying users what will happen with their submission
@@ -245,6 +197,7 @@ class plagiarism_plugin_crot extends plagiarism_plugin {
         return ['enabled', 'crot_local', 'crot_global'];
     }
 }
+
 function plagiarism_crot_coursemodule_standard_elements($formwrapper, $mform) {
     global $DB;
     $plagiarismsettings = (array)get_config('plagiarism_crot');
@@ -300,6 +253,7 @@ function plagiarism_crot_coursemodule_edit_post_actions($data, $course) {
     }
     return $data;
 }
+
 function plagiarism_crot_extend_navigation_course($navigation, $course, $context) {
     global $PAGE;
     if (!$PAGE->course || $PAGE->course->id == SITEID) {
