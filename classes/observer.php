@@ -37,26 +37,7 @@ class plagiarism_crot_observer {
         //mainly used by assignment finalize - used if you want to handle "submit for marking" events
         //a file has been uploaded/finalised - submit this to the plagiarism prevention service.
         $eventdata = $event->get_data();
-        /*array(17) {
-         ["eventname"]=> string(38) "\mod_assign\event\assessable_submitted"
-         ["component"]=> string(10) "mod_assign"
-         ["action"]=> string(9) "submitted"
-         ["target"]=> string(10) "assessable"
-         ["objecttable"]=> string(17) "assign_submission"
-         ["objectid"]=> string(6) "177820"
-         ["crud"]=> string(1) "u"
-         ["edulevel"]=> int(2)
-         ["contextid"]=> int(61685)
-         ["contextlevel"]=> int(70)
-         ["contextinstanceid"]=> string(5) "21005"
-         ["userid"]=> string(5) "28048"
-         ["courseid"]=> string(3) "160"
-         ["relateduserid"]=> NULL
-         ["anonymous"]=> int(0)
-         ["other"]=> array(1) { ["submission_editable"]=> bool(false) }
-         ["timecreated"]=> int(1628066347) } */
-        // $cm = get_coursemodule_from_id($eventdata['other']['modulename'], $eventdata['contextinstanceid']);
-        // var_dump($eventdata);die;
+
         $cmid = $eventdata['contextinstanceid'];
         $plagiarismvalues = $DB->get_records_menu('plagiarism_crot_config', ['cm' => $cmid], '', 'name,value');
         if (empty($plagiarismvalues['enabled'])) {
@@ -96,24 +77,7 @@ class plagiarism_crot_observer {
                         //echo "\nfile " . $file->get_filename() . " was queued up for plagiarism detection service\n";
                     }
                 }
-                /*foreach ($eventdata->pathnamehashes as $hash) {
-                    var_dump($hash);
-                    $fs = get_file_storage();
-                    $file = $fs->get_file_by_hash($hash);
-                    if (empty($file) || ($file->get_filename() === '.')) {
-                        // This 'file' is actually a directory - nothing to submit.
-                        continue;
-                    }
-                    $newelement = new stdClass();
-                    $newelement->file_id = $file->get_id();
-                    $newelement->path = $file->get_contenthash();
-                    $newelement->status = $status_value[0];
-                    $newelement->time = time();
-                    $newelement->cm = $cmid;
-                    $newelement->courseid = $eventdata['courseid'];
-                    $result = $DB->insert_record('plagiarism_crot_files', $newelement);
-                    echo "\nfile " . $file->get_filename() . " was queued up for plagiarism detection service\n";
-                }*/
+
             }
 
             return $result;

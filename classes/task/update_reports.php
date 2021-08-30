@@ -62,7 +62,7 @@ class update_reports extends \core\task\scheduled_task {
             die('The plugin is not properly set. Please set the plugin in admin/plugins/plagiarism prevention menu');    /// the initial settigns were not properly set up
         }
 
-        $sql_query = "SELECT cf.* FROM {plagiarism_crot_files} cf where cf.status = 'queue'";
+        $sql_query = "SELECT cf.* FROM {plagiarism_crot_files} cf WHERE cf.status = 'queue'";
         $files = $DB->get_records_sql($sql_query, [], 0, 10);
 
         if (!empty($files)) {
@@ -97,11 +97,6 @@ class update_reports extends \core\task\scheduled_task {
                     $docrecord->content = addslashes($atext);
                     $docid = $DB->insert_record('plagiarism_crot_documents', $docrecord);
 
-                    //$content = addslashes($atext);
-                    //$query = "INSERT INTO {$CFG->prefix}plagiarism_crot_documents (content, crot_submission_id) VALUES ('$content','$afile->id')";
-                    //mysql_query($query);
-                    //  $docid = mysql_insert_id();
-
                     // fingerprinting - calculate and store the fingerprints into the table
                     $atext = mb_strtolower($atext, "utf-8");
 
@@ -111,7 +106,7 @@ class update_reports extends \core\task\scheduled_task {
 
                     // store fingerprint
                     foreach ($fingerp as $fp) {
-                        $hashrecord=new \stdClass();
+                        $hashrecord = new \stdClass();
                         $hashrecord->position = $fp->position;
                         $hashrecord->crot_doc_id = $docid;
                         $hashrecord->value = $fp->value;
@@ -125,14 +120,16 @@ class update_reports extends \core\task\scheduled_task {
                         // comparing fingerprints and updating plagiarism_crot_spair table
                         // select all submissions that has at least on common f/print with the current document
                         $sql_query = "SELECT id
-				FROM {$CFG->prefix}plagiarism_crot_documents asg
-					WHERE exists (
-						select * from
-						{$CFG->prefix}plagiarism_crot_fingerprint fp1
-						inner join {$CFG->prefix}plagiarism_crot_fingerprint fp2 on fp1.value = fp2.value
-							where fp2.crot_doc_id = asg.id and fp1.crot_doc_id = $docid
-					)";
-                        $pair_submissions = $DB->get_records_sql($sql_query);
+                                        FROM {plagiarism_crot_documents} asg
+                                       WHERE EXISTS (
+                                             SELECT * 
+                                               FROM {plagiarism_crot_fingerprint} fp1
+                                               JOIN {plagiarism_crot_fingerprint} fp2 
+                                                 ON fp1.value = fp2.value
+                                              WHERE fp2.crot_doc_id = asg.id 
+                                                    AND fp1.crot_doc_id = :crot_doc_id
+                                             )";
+                        $pair_submissions = $DB->get_records_sql($sql_query, ['crot_doc_id' => $docid]);
 
                         foreach ($pair_submissions as $pair_submission) {
                             // check if id exists in web_doc table then don't compare because
@@ -141,28 +138,30 @@ class update_reports extends \core\task\scheduled_task {
                                 continue;
                             //compare two fingerprints to get the number of same hashes
                             if ($docid != $pair_submission->id) {
-                                $sql_query = "select sum(case when cnt1 < cnt2 then cnt1 else cnt2 end) cnt
-						from
-						(
-							select count(*) as cnt1, (
-								select count(*)
-								from {$CFG->prefix}plagiarism_crot_fingerprint fp2
-								where 		fp2.crot_doc_id 	= $docid  
-									and	fp2.value		= fp1.value
-							) as cnt2
-							from {$CFG->prefix}plagiarism_crot_fingerprint fp1
-							where fp1.crot_doc_id = $pair_submission->id
-							group by fp1.value
-						) t";
-                                $similarnumber = $DB->get_record_sql($sql_query);
+                                $sql_query = "SELECT sum(CASE WHEN cnt1 < cnt2 THEN cnt1 ELSE cnt2 END) cnt
+                                                FROM (
+                                                      SELECT count(*) AS cnt1, 
+                                                             (SELECT count(*)
+                                                                FROM {plagiarism_crot_fingerprint} fp2
+                                                               WHERE fp2.crot_doc_id = :docid  
+                                                                     AND fp2.value = fp1.value
+                                                             ) AS cnt2
+                                                      FROM {plagiarism_crot_fingerprint} fp1
+                                                      WHERE fp1.crot_doc_id = :crot_doc_id
+                                                      GROUP BY fp1.value
+                                                ) t";
+                                $similarnumber = $DB->get_record_sql($sql_query, ['crot_doc_id' => $pair_submission->id, 'docid'=>$docid]);
                                 // takes id1 id2 and create/update record with the number of similar hashes
-                                $sql_query = "SELECT * FROM {$CFG->prefix}plagiarism_crot_spair 
-							where (submission_a_id = $afile->id and submission_b_id = $pair_submission->id) 
-							OR (submission_a_id = $pair_submission->id and submission_b_id = $afile->id)";
+                                $sql_query = "SELECT * 
+                                                FROM {plagiarism_crot_spair} 
+                                               WHERE (submission_a_id = $afile->id 
+                                                         AND submission_b_id = $pair_submission->id) 
+                                                     OR (submission_a_id = $pair_submission->id 
+                                                         AND submission_b_id = $afile->id)";
                                 $pair = $DB->get_record_sql($sql_query);
                                 if (!$pair) {
                                     // insert
-                                    $pair_record=new \stdClass();
+                                    $pair_record = new \stdClass();
                                     $pair_record->submission_a_id = $docid;
                                     $pair_record->submission_b_id = $pair_submission->id;
                                     $pair_record->number_of_same_hashes = $similarnumber->cnt;
@@ -220,7 +219,7 @@ class update_reports extends \core\task\scheduled_task {
                                     if (trim($result) == "") {
                                         continue;
                                     }
-                                } catch (Exception $e) {
+                                } catch (\Exception $e) {
                                     print_error("exception in downloading!\n");
                                     $result = "Was not able to download the respective resource";
                                 }
@@ -240,17 +239,13 @@ class update_reports extends \core\task\scheduled_task {
                                 }
                             }
                             // insert doc into crot_doc table
-                            $wdocrecord=new \stdClass();
+                            $wdocrecord = new \stdClass();
                             $wdocrecord->crot_submission_id = 0;
                             $wdocrecord->content = addslashes($result);
                             $wdocid = $DB->insert_record("plagiarism_crot_documents", $wdocrecord);
-                            //$wdoc_content = addslashes($result);
-                            //$query = "INSERT INTO {$CFG->prefix}plagiarism_crot_documents (content, crot_submission_id) VALUES ('$wdoc_content','0')";
-                            // mysql_query($query);
-                            //$wdocid = mysql_insert_id();
 
                             // insert doc into web_doc table
-                            $webdocrecord=new \stdClass();
+                            $webdocrecord = new \stdClass();
                             $webdocrecord->document_id = $wdocid;
                             $webdocrecord->link = urlencode($manUrl->mainUrl);
                             $webdocrecord->link_live = urlencode($manUrl->msUrl);
@@ -262,7 +257,7 @@ class update_reports extends \core\task\scheduled_task {
                             $fingerp = [];
                             try {
                                 $fingerp = GetFingerprint($result);
-                            } catch (Exception $e) {
+                            } catch (\Exception $e) {
                                 print_error("exception in FP calc\n");
                                 continue;
                             }
@@ -276,22 +271,23 @@ class update_reports extends \core\task\scheduled_task {
                             }
 
                             //compare two fingerprints to get the number of same hashes
-                            $sql_query = "select sum(case when cnt1 < cnt2 then cnt1 else cnt2 end) cnt
-					from
-					(
-						select count(*) as cnt1, (
-							select count(*)
-							from {$CFG->prefix}plagiarism_crot_fingerprint fp2
-							where 		fp2.crot_doc_id 	= $docid  
-								and	fp2.value		= fp1.value
-						) as cnt2
-						from {$CFG->prefix}plagiarism_crot_fingerprint fp1
-						where fp1.crot_doc_id = $wdocid
-						group by fp1.value
-					) t";
+
+                            $sql_query = "SELECT sum(CASE WHEN cnt1 < cnt2 THEN cnt1 ELSE cnt2 END) cnt
+                                                FROM (
+                                                      SELECT count(*) AS cnt1, 
+                                                             (SELECT count(*)
+                                                                FROM {plagiarism_crot_fingerprint} fp2
+                                                               WHERE fp2.crot_doc_id = :docid  
+                                                                     AND fp2.value = fp1.value
+                                                             ) AS cnt2
+                                                      FROM {plagiarism_crot_fingerprint} fp1
+                                                      WHERE fp1.crot_doc_id = :crot_doc_id
+                                                      GROUP BY fp1.value
+                                                ) t";
+
                             try {
-                                $similarnumber = $DB->get_record_sql($sql_query);
-                            } catch (Exception $e) {
+                                $similarnumber = $DB->get_record_sql($sql_query, ['crot_doc_id' => $wdocid, 'docid'=>$docid]);
+                            } catch (\Exception $e) {
                                 print_error("exception in query\n");
                                 continue;
                             }
@@ -316,7 +312,7 @@ class update_reports extends \core\task\scheduled_task {
                     $afile->status = 'end_processing';
                     $DB->update_record('plagiarism_crot_files', $afile);
                     echo "\nfile $afile->id was sucessfully processed\n";
-                } catch (Exception $e) {
+                } catch (\Exception $e) {
                     print_error("Error in processing file $afile->id!\n");
                     continue;
                 }
@@ -324,11 +320,7 @@ class update_reports extends \core\task\scheduled_task {
         } else {
             echo "No uploaded assignments to process!";
         }
-// set back normal values for php limits
-        ini_set('max_execution_time', $maxtimelimit);
-        ini_set('memory_limit', $maxmemoryamount);
-
-// calc and display exec time
+        // calc and display exec time
         $mtime = microtime();
         $mtime = explode(" ", $mtime);
         $mtime = $mtime[1] + $mtime[0];
