@@ -248,7 +248,12 @@ function GetFingerprint($atext) {
 */
 function colorer($text, $start, $end, $color) {
     $rem = mb_strlen($text) - $end - 1;
-    return mb_substr($text, 0, $start, "utf-8") . "<b style='color: $color'>" . mb_substr($text, $start, $end - $start + 1, "utf-8") . "</b>" . mb_substr($text, $end + 1, $rem, "utf-8");
+    return mb_substr($text, 0, $start, "utf-8") .
+        html_writer::tag('b',
+            mb_substr($text, $start, $end - $start + 1, "utf-8"),
+            ['style' => 'color: $color']
+        ) .
+        mb_substr($text, $end + 1, $rem, "utf-8");
 }// end of function colorer
 
 
@@ -280,12 +285,12 @@ function fetchBingResults($query, $querysize, $msnsoapkey, $culture_info) {
 
     $results = [];
     $request = 'http://api.bing.net/xml.aspx?Appid=' . $msnsoapkey .
-               '&sources=web&Query=' . urlencode($query) .
-               //		TODO add query count
-               '&culture=' . $culture_info .
-               //		'&Web.Count='.$querysize.
-               '&Web.Options=DisableHostCollapsing+DisableQueryAlterations' .
-               '&Options=DisableLocationDetection&Version=2.2';
+        '&sources=web&Query=' . urlencode($query) .
+        //		TODO add query count
+        '&culture=' . $culture_info .
+        //		'&Web.Count='.$querysize.
+        '&Web.Options=DisableHostCollapsing+DisableQueryAlterations' .
+        '&Options=DisableLocationDetection&Version=2.2';
     $response = new DOMDocument();
     $response->load($request);
     $webResults = $response->getElementsByTagName("WebResult");
