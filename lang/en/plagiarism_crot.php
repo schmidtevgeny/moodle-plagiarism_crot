@@ -121,6 +121,7 @@ $string['tables_cleaned_up'] = 'Crot tables were cleaned up!';
 $string['col_name'] = 'Name';
 $string['col_course'] = 'Course';
 $string['col_similarity_score'] = 'Similarity score';
+$string['val_similarity_score'] = 'Similarity score: {$a} %';
 $string['file_was_not_found'] = 'Cannot find local file. Most likely it was removed from the system';
 $string['course_not_applicable'] = 'not applicable';
 $string['no_plagiarism'] = 'no plagiarism have been detected OR check up was not performed yet';

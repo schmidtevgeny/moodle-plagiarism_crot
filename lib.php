@@ -107,13 +107,13 @@ class plagiarism_plugin_crot extends plagiarism_plugin {
                                     html_writer::link(
                                         new moodle_url('/plagiarism/crot/index.php',
                                             ['id_a' => $crot_doc_rec->id, 'user_id' => $userid, 'cid' => $cid]),
-                                        get_string('col_similarity_score', 'plagiarism_crot') . ': ' . $perc . '%'
+                                        get_string('val_similarity_score', 'plagiarism_crot', $perc)
                                     )
                                 );
                         } else {
                             $output .= html_writer::empty_tag('br') .
                                 html_writer::tag('b',
-                                    get_string('col_similarity_score', 'plagiarism_crot') . ': ' . $perc . '%'
+                                    get_string('val_similarity_score', 'plagiarism_crot', $perc)
                                 );
                         }
                     }
@@ -123,29 +123,56 @@ class plagiarism_plugin_crot extends plagiarism_plugin {
             $path = $linkarray['content'];
             $path = strip_tags($path);
             $path = sha1($path);
-            $sql_query = "SELECT * FROM {$CFG->prefix}plagiarism_crot_files WHERE path ='$path' AND courseid = $course AND cm = $cmid ORDER BY file_id DESC LIMIT 1";
-            $file = $DB->get_record_sql($sql_query);
+
+            $sql_query = "SELECT * 
+                            FROM {plagiarism_crot_files} 
+                           WHERE path = :path 
+                                 AND courseid = :courseid 
+                                 AND cm = :cm 
+                        ORDER BY file_id DESC 
+                           LIMIT 1";
+
+            $file = $DB->get_record_sql($sql_query, ['path' => $path, 'courseid' => $course, 'cm' => $cmid]);
             $fileid = $file->file_id;
 
             if (!$plagiarism_crot_files_rec = $DB->get_record("plagiarism_crot_files", ["file_id" => $fileid])) {
-                $output .= '<small><i>Pending</i></small> ';// if there is no record in plagiarism_crot_files about this file then nothing to show
+                $output .= html_writer::tag('small', html_writer::tag('i', 'Pending')) . ' ';
+                // if there is no record in plagiarism_crot_files about this file then nothing to show
             } else {
                 if (!$crot_doc_rec = $DB->get_record("plagiarism_crot_documents", ["crot_submission_id" => $plagiarism_crot_files_rec->id])) {
                     $output .= '';// if there is no record in plagiarism_crot_documents about this file then nothing to show
                 } else {
-                    $sql_query = "SELECT max(number_of_same_hashes) as max FROM {$CFG->prefix}plagiarism_crot_spair WHERE submission_a_id ='$crot_doc_rec->id' OR  submission_b_id = '$crot_doc_rec->id'";
-                    if (!$similarity = $DB->get_record_sql($sql_query)) {// get maximum number of same hashes for the current document
-                        $output .= '<br><b>' . get_string('no_similarities', 'plagiarism_crot') . '</b>';
+                    $sql_query = "SELECT max(number_of_same_hashes) AS max 
+                                    FROM {plagiarism_crot_spair} 
+                                   WHERE submission_a_id = :submission_a_id
+                                         OR  submission_b_id = :submission_b_id";
+                    if (!$similarity = $DB->get_record_sql($sql_query, ['submission_a_id' => $crot_doc_rec->id, 'submission_b_id' => $crot_doc_rec->id])) {
+                        // get maximum number of same hashes for the current document
+                        $output .= html_writer::empty_tag('br') .
+                            html_writer::tag('b', get_string('no_similarities', 'plagiarism_crot'));
                     } else {
-                        $sql_query = "SELECT count(*) as cnt from {$CFG->prefix}plagiarism_crot_fingerprint where crot_doc_id = '$crot_doc_rec->id'";
-                        $numbertotal = $DB->get_record_sql($sql_query);// get total number of hashes for the current document
-                        $perc = round(($similarity->max / $numbertotal->cnt) * 100, 2);
-                        if (has_capability('mod/assignment:grade', $PAGE->context)) {
-                            $output .= "<br><b> <a href=\"../../plagiarism/crot/index.php?id_a=$crot_doc_rec->id&user_id=$userid&cid=$cid\">" .
-                                get_string('col_similarity_score', 'plagiarism_crot') . ': ' . $perc . "%</a></b>";
+                        $sql_query = "SELECT count(*) AS cnt 
+                                        FROM {plagiarism_crot_fingerprint} 
+                                       WHERE crot_doc_id = :crot_doc_id";
+                        $numbertotal = $DB->get_record_sql($sql_query, ['crot_doc_id' => $crot_doc_rec->id]);// get total number of hashes for the current document
+                        if ($numbertotal->cnt == 0) {
+                            $perc = 0;
                         } else {
-                            $output .= "<br><b> " .
-                                get_string('col_similarity_score', 'plagiarism_crot') . ': ' . $perc . "%</a></b>";
+                            $perc = round(($similarity->max / $numbertotal->cnt) * 100, 2);
+                        }
+                        if (has_capability('mod/assignment:grade', $PAGE->context)) {
+                            $output .= html_writer::empty_tag('br') .
+                                html_writer::tag('b',
+                                    html_writer::link(
+                                        new moodle_url('/plagiarism/crot/index.php',
+                                            ['id_a' => $crot_doc_rec->id, 'user_id' => $userid, 'cid' => $cid]),
+                                        get_string('val_similarity_score', 'plagiarism_crot', $perc)
+                                    )
+                                );
+                        } else {
+                            $output .= html_writer::empty_tag('br') .
+                                html_writer::tag('b',
+                                    get_string('val_similarity_score', 'plagiarism_crot', $perc));
                         }
                     }
                 }
