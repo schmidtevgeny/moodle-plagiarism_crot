@@ -33,6 +33,7 @@ if (!defined('MOODLE_INTERNAL')) {
 global $CFG, $DB;
 require_once($CFG->dirroot . '/plagiarism/lib.php');
 
+
 ///// Crot Class ////////////////////////////////////////////////////
 class plagiarism_plugin_crot extends plagiarism_plugin {
     public function get_all_system_config() {

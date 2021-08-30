@@ -141,3 +141,10 @@ $string['download_inwicast_message'] = '<p>INWICAST Publisher is a very simple a
 
 $string['FILE_FORMAT_NOT_ALLOWED'] = "Sorry but this file format is not allowed for upload";
 
+$string['enable_for']='Enable CROT for {$a}';
+$string['disable_for']='Disable CROT for {$a}';
+
+$string['enabled']='Enabled';
+$string['disabled']='Disabled';
+$string['enable']='Enable';
+$string['disable']='Disable';
