@@ -6,10 +6,12 @@
  */
 
 require_once(dirname(__FILE__, 2) . '/../config.php');
+require_once($CFG->dirroot . "/plagiarism/crot/locallib.php");
+
 global $CFG;
 
 require_once($CFG->dirroot . "/course/lib.php");
-
+$DB2=local_crot_db();
 $ida = required_param('id_a', PARAM_INT);   // doc id
 $user_id = required_param('user_id', PARAM_INT);
 $cid = required_param('cid', PARAM_INT);    // course id
@@ -92,13 +94,14 @@ $table2->size = ['40%', '50%', '10%'];
 $table2->attributes['class'] = 'rowtable';
 
 $sql_query = "SELECT * FROM {$CFG->prefix}plagiarism_crot_spair WHERE submission_a_id ='$ida' OR  submission_b_id = '$ida' order by number_of_same_hashes desc";
-$similars = $DB->get_records_sql($sql_query);
+$similars = $DB2->get_records_sql($sql_query);
 $sql_query = "SELECT count(*) as cnt from {$CFG->prefix}plagiarism_crot_fingerprint where crot_doc_id = '$ida'";
-$numbertotal = $DB->get_record_sql($sql_query);// get total number of hashes in the current document
+$numbertotal = $DB2->get_record_sql($sql_query);// get total number of hashes in the current document
 
 // loop to select assignments with level of similarities above the threshold
 if (!empty($similars)) {
     foreach ($similars as $asim) {
+        if ($asim->number_of_same_hashes / $numbertotal->cnt<0.03) continue;
         if ($asim->submission_a_id == $ida) {
             $partner = $asim->submission_b_id;
         } else {

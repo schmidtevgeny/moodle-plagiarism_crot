@@ -62,6 +62,8 @@ class plagiarism_plugin_crot extends plagiarism_plugin {
      */
     public function get_links($linkarray) {
         global $DB, $CFG, $PAGE;
+        require_once($CFG->dirroot . "/plagiarism/crot/locallib.php");
+        $DB2=local_crot_db();
         // echo '<pre>';
         if (array_key_exists('forum', $linkarray)) return '';
         if (!array_key_exists('file', $linkarray)) return '';
@@ -86,7 +88,7 @@ class plagiarism_plugin_crot extends plagiarism_plugin {
                                     FROM {plagiarism_crot_spair} 
                                    WHERE submission_a_id = :submission_a_id
                                          OR  submission_b_id = :submission_b_id";
-                    if (!$similarity = $DB->get_record_sql($sql_query, ['submission_a_id' => $crot_doc_rec->id, 'submission_b_id' => $crot_doc_rec->id])) {
+                    if (!$similarity = $DB2->get_record_sql($sql_query, ['submission_a_id' => $crot_doc_rec->id, 'submission_b_id' => $crot_doc_rec->id])) {
                         // get maximum number of same hashes for the current document
                         $output .= html_writer::empty_tag('br') .
                             html_writer::tag('b', get_string('no_similarities', 'plagiarism_crot'));
@@ -94,7 +96,7 @@ class plagiarism_plugin_crot extends plagiarism_plugin {
                         $sql_query = "SELECT count(*) AS cnt 
                                         FROM {plagiarism_crot_fingerprint} 
                                        WHERE crot_doc_id = :crot_doc_id";
-                        $numbertotal = $DB->get_record_sql($sql_query, ['crot_doc_id' => $crot_doc_rec->id]);// get total number of hashes for the current document
+                        $numbertotal = $DB2->get_record_sql($sql_query, ['crot_doc_id' => $crot_doc_rec->id]);// get total number of hashes for the current document
                         if ($numbertotal->cnt == 0) {
                             $perc = 0;
                         } else {
@@ -146,7 +148,7 @@ class plagiarism_plugin_crot extends plagiarism_plugin {
                                     FROM {plagiarism_crot_spair} 
                                    WHERE submission_a_id = :submission_a_id
                                          OR  submission_b_id = :submission_b_id";
-                    if (!$similarity = $DB->get_record_sql($sql_query, ['submission_a_id' => $crot_doc_rec->id, 'submission_b_id' => $crot_doc_rec->id])) {
+                    if (!$similarity = $DB2->get_record_sql($sql_query, ['submission_a_id' => $crot_doc_rec->id, 'submission_b_id' => $crot_doc_rec->id])) {
                         // get maximum number of same hashes for the current document
                         $output .= html_writer::empty_tag('br') .
                             html_writer::tag('b', get_string('no_similarities', 'plagiarism_crot'));
@@ -154,7 +156,7 @@ class plagiarism_plugin_crot extends plagiarism_plugin {
                         $sql_query = "SELECT count(*) AS cnt 
                                         FROM {plagiarism_crot_fingerprint} 
                                        WHERE crot_doc_id = :crot_doc_id";
-                        $numbertotal = $DB->get_record_sql($sql_query, ['crot_doc_id' => $crot_doc_rec->id]);// get total number of hashes for the current document
+                        $numbertotal = $DB2->get_record_sql($sql_query, ['crot_doc_id' => $crot_doc_rec->id]);// get total number of hashes for the current document
                         if ($numbertotal->cnt == 0) {
                             $perc = 0;
                         } else {

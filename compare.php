@@ -9,6 +9,7 @@ require_once(dirname(__FILE__, 2) . '/../config.php');
 global $CFG, $DB;
 require_once($CFG->dirroot . "/plagiarism/crot/locallib.php");
 require_once($CFG->dirroot . "/course/lib.php");
+$DB2=local_crot_db();
 
 // globals
 $plagiarismsettings = (array)get_config('plagiarism_crot');
@@ -18,7 +19,7 @@ $allColors = explode(",", $plagiarismsettings['crot_colours']);
 
 $ida = required_param('ida', PARAM_INT);   // submission A
 $idb = required_param('idb', PARAM_INT);   // submission B
-
+// получение ссылки на документ - удаленно
 if (!$submA = $DB->get_record("plagiarism_crot_documents", ["id" => $ida])) {
     print_error(get_string('incorrect_docAid', 'plagiarism_crot'));
 }
@@ -27,7 +28,7 @@ if ($submA->crot_submission_id == 0) {
 } else {
     $isWebA = false;
 }
-
+// получение ссылки на документ - удаленно
 if (!$submB = $DB->get_record("plagiarism_crot_documents", ["id" => $idb])) {
     print_error(get_string('incorrect_docBid', 'plagiarism_crot'));
 }
@@ -39,9 +40,11 @@ if ($submB->crot_submission_id == 0) {
 
 // TODO get global assignment id
 if (!$isWebA) {
+    // получение ссылки на документ - удаленно
     if (!$subA = $DB->get_record("plagiarism_crot_files", ["id" => $submA->crot_submission_id])) {
         print_error(get_string('incorrect_fileAid', 'plagiarism_crot'));
     }
+    // получение файла
     if (!$filea = $DB->get_record("files", ["id" => $subA->file_id])) {
         print_error(get_string('incorrect_fileAid', 'plagiarism_crot'));
     }
@@ -150,12 +153,13 @@ echo $OUTPUT->header();
 $textA = stripslashes($submA->content);
 //$textA = ($submA->content);
 
+
 // get all hashes for docA
 $sql_query = "SELECT * FROM {$CFG->prefix}plagiarism_crot_fingerprint f WHERE crot_doc_id = $ida ORDER BY position asc";
-$hashesA = $DB->get_records_sql($sql_query);
+$hashesA = $DB2->get_records_sql($sql_query);
 // get all hashes for document B
 $sql_query = "SELECT * FROM {$CFG->prefix}plagiarism_crot_fingerprint f WHERE crot_doc_id = $idb ORDER BY position asc";
-$hashesB = $DB->get_records_sql($sql_query);
+$hashesB = $DB2->get_records_sql($sql_query);
 
 // TODO create separate function for coloring ?
 $sameHashA = [];
