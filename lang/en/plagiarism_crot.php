@@ -149,3 +149,4 @@ $string['enabled']='Enabled';
 $string['disabled']='Disabled';
 $string['enable']='Enable';
 $string['disable']='Disable';
+$string['updatereportscores']='Update report';

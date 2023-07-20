@@ -36,7 +36,6 @@ class update_reports extends \core\task\scheduled_task {
     }
 
     public function execute() {
-
         $mtime = microtime();
         $mtime = explode(" ", $mtime);
         $mtime = $mtime[1] + $mtime[0];
@@ -48,6 +47,8 @@ class update_reports extends \core\task\scheduled_task {
         require_once($CFG->dirroot . '/plagiarism/crot/locallib.php');
         require_once($CFG->dirroot . "/course/lib.php");
         require_once($CFG->dirroot . "/mod/assignment/lib.php");
+
+        $DB2=local_crot_db();
 
         $plagiarismsettings = (array)get_config('plagiarism_crot');
         $gram_size = $plagiarismsettings['crot_grammarsize'];
@@ -64,10 +65,14 @@ class update_reports extends \core\task\scheduled_task {
 
         $sql_query = "SELECT cf.* FROM {plagiarism_crot_files} cf WHERE cf.status = 'queue'";
         $files = $DB->get_records_sql($sql_query, [], 0, 10);
+        $sql_query = "SELECT count(1) as cnt FROM {plagiarism_crot_files} cf WHERE cf.status = 'queue'";
+        $wait = $DB->get_record_sql($sql_query);
+        echo "\n{$wait->cnt} file in queue";
 
         if (!empty($files)) {
             foreach ($files as $afile) {
-                try {
+                try
+                {
                     $afile->status = 'in_processing';
                     $DB->update_record('plagiarism_crot_files', $afile);
 
@@ -110,7 +115,7 @@ class update_reports extends \core\task\scheduled_task {
                         $hashrecord->position = $fp->position;
                         $hashrecord->crot_doc_id = $docid;
                         $hashrecord->value = $fp->value;
-                        $DB->insert_record("plagiarism_crot_fingerprint", $hashrecord);
+                        $DB2->insert_record("plagiarism_crot_fingerprint", $hashrecord);
                     }
 
                     // local search
@@ -129,7 +134,13 @@ class update_reports extends \core\task\scheduled_task {
                                               WHERE fp2.crot_doc_id = asg.id 
                                                     AND fp1.crot_doc_id = :crot_doc_id
                                              )";
-                        $pair_submissions = $DB->get_records_sql($sql_query, ['crot_doc_id' => $docid]);
+                        $sql_query = "SELECT distinct fp2.crot_doc_id as id
+       FROM
+           {plagiarism_crot_fingerprint} fp1
+       JOIN {plagiarism_crot_fingerprint} fp2
+         ON fp1.value = fp2.value
+      WHERE  fp1.crot_doc_id = :crot_doc_id";
+                        $pair_submissions = $DB2->get_records_sql($sql_query, ['crot_doc_id' => $docid]);
 
                         foreach ($pair_submissions as $pair_submission) {
                             // check if id exists in web_doc table then don't compare because
@@ -150,7 +161,7 @@ class update_reports extends \core\task\scheduled_task {
                                                       WHERE fp1.crot_doc_id = :crot_doc_id
                                                       GROUP BY fp1.value
                                                 ) t";
-                                $similarnumber = $DB->get_record_sql($sql_query, ['crot_doc_id' => $pair_submission->id, 'docid'=>$docid]);
+                                $similarnumber = $DB2->get_record_sql($sql_query, ['crot_doc_id' => $pair_submission->id, 'docid'=>$docid]);
                                 // takes id1 id2 and create/update record with the number of similar hashes
                                 $sql_query = "SELECT * 
                                                 FROM {plagiarism_crot_spair} 
@@ -158,14 +169,14 @@ class update_reports extends \core\task\scheduled_task {
                                                          AND submission_b_id = $pair_submission->id) 
                                                      OR (submission_a_id = $pair_submission->id 
                                                          AND submission_b_id = $afile->id)";
-                                $pair = $DB->get_record_sql($sql_query);
+                                $pair = $DB2->get_record_sql($sql_query);
                                 if (!$pair) {
                                     // insert
                                     $pair_record = new \stdClass();
                                     $pair_record->submission_a_id = $docid;
                                     $pair_record->submission_b_id = $pair_submission->id;
                                     $pair_record->number_of_same_hashes = $similarnumber->cnt;
-                                    $DB->insert_record("plagiarism_crot_spair", $pair_record);
+                                    $DB2->insert_record("plagiarism_crot_spair", $pair_record);
                                 } else {
                                     // TODO update
                                 }
@@ -267,7 +278,7 @@ class update_reports extends \core\task\scheduled_task {
                                 $hashrecord->position = $fp->position;
                                 $hashrecord->crot_doc_id = $wdocid;
                                 $hashrecord->value = $fp->value;
-                                $DB->insert_record("plagiarism_crot_fingerprint", $hashrecord);
+                                $DB2->insert_record("plagiarism_crot_fingerprint", $hashrecord);
                             }
 
                             //compare two fingerprints to get the number of same hashes
@@ -286,7 +297,7 @@ class update_reports extends \core\task\scheduled_task {
                                                 ) t";
 
                             try {
-                                $similarnumber = $DB->get_record_sql($sql_query, ['crot_doc_id' => $wdocid, 'docid'=>$docid]);
+                                $similarnumber = $DB2->get_record_sql($sql_query, ['crot_doc_id' => $wdocid, 'docid'=>$docid]);
                             } catch (\Exception $e) {
                                 print_error("exception in query\n");
                                 continue;
@@ -297,13 +308,13 @@ class update_reports extends \core\task\scheduled_task {
                                 $pair_record->submission_a_id = $docid;
                                 $pair_record->submission_b_id = $wdocid;
                                 $pair_record->number_of_same_hashes = $similarnumber->cnt;
-                                $ppair = $DB->insert_record("plagiarism_crot_spair", $pair_record);
+                                $ppair = $DB2->insert_record("plagiarism_crot_spair", $pair_record);
                             } else {
                                 //if null then remove the web document and its fingerprint
                                 // remove from doc
                                 $DB->delete_records("plagiarism_crot_documents", ["id" => $wdocid]);
                                 // remove from fingerprints
-                                $DB->delete_records("plagiarism_crot_fingerprint", ["crot_doc_id" => $wdocid]);
+                                $DB2->delete_records("plagiarism_crot_fingerprint", ["crot_doc_id" => $wdocid]);
                             }
                         }
 
@@ -312,8 +323,9 @@ class update_reports extends \core\task\scheduled_task {
                     $afile->status = 'end_processing';
                     $DB->update_record('plagiarism_crot_files', $afile);
                     echo "\nfile $afile->id was sucessfully processed\n";
-                } catch (\Exception $e) {
-                    print_error("Error in processing file $afile->id!\n");
+                }
+                catch (\Exception $e) {
+                    echo "\nError in processing file $afile->id!\n";
                     continue;
                 }
             }// end of the main loop

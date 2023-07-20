@@ -440,3 +440,16 @@ function getTopResults($queries, $todown, $msnkey, $culture_info) {
     }// end sending queries: we have top x results
     return $allURLs->getMax($todown);
 }
+function local_crot_db() {
+    global $CFG;
+
+    $DB2 = moodle_database::get_driver_instance($CFG->dbtype, $CFG->dblibrary);
+
+    try {
+        $DB2->connect('localhost', $CFG->dbuser, $CFG->dbpass, $CFG->dbname, $CFG->prefix, $CFG->dboptions);
+    } catch (moodle_exception $e) {
+        return false;
+    }
+
+    return $DB2;
+}
