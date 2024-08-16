@@ -1,4 +1,10 @@
 <?php
+/**
+ * @file textlib.php
+ *
+ * Библиотека получения текста из разных источников
+ *
+ */
 /*
 This library is to process external files of different types
 Adopted mostly from DonRamon

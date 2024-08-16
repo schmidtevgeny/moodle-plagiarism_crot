@@ -15,9 +15,14 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-$plugin->version =  2013071100;
+$plugin->version =  2024082402;
 $plugin->requires = 2012062600;
 $plugin->maturity = MATURITY_BETA;
-$plugin->release ='2.3.0.2';
+$plugin->release ='2.3.0.3';
 $plugin->component = 'plagiarism_crot';
 $plugin->cron     = 0;
+$plugin->dependencies = array(
+    'mod_assign' => ANY_VERSION,
+    'mod_forum' => ANY_VERSION,
+    'mod_quiz' => ANY_VERSION,
+);

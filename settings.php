@@ -16,6 +16,7 @@
 
 /**
  * plagiarism.php - allows the admin to configure plagiarism stuff
+ * позволяет администратору настраивать плагиат
  *
  * @package   plagiarism_crot
  * @author    Dan Marsden <dan@danmarsden.com>, Sergey Butakov, Svetlana Kim

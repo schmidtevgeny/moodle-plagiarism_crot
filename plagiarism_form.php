@@ -1,6 +1,7 @@
 <?php
 /**
  * @author Dan Marsden, Svetlana Kim
+ * форма настройки элементов курса
  */
 require_once($CFG->dirroot.'/lib/formslib.php');
 

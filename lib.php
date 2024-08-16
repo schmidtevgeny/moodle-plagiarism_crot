@@ -16,6 +16,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 /**
  * lib.php - Contains Plagiarism plugin specific functions called by Modules.
+ * Содержит специфические функции плагина Plagiarism, вызываемые модулями. В общем калбаки
  *
  * @since 2.0
  * @package    plagiarism_crot

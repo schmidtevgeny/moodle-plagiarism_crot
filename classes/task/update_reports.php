@@ -46,7 +46,7 @@ class update_reports extends \core\task\scheduled_task {
         require_once($CFG->dirroot . '/plagiarism/crot/lib.php');
         require_once($CFG->dirroot . '/plagiarism/crot/locallib.php');
         require_once($CFG->dirroot . "/course/lib.php");
-        require_once($CFG->dirroot . "/mod/assignment/lib.php");
+//        require_once($CFG->dirroot . "/mod/assignment/lib.php");
 
         $DB2=local_crot_db();
 

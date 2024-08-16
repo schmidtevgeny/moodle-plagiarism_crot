@@ -3,7 +3,7 @@
  *
  * @author Sergey Butakov, Svetlana Kim
  * this module compares two submissions side by side
- *
+ * Этот модуль сравнивает два представления между собой
  */
 require_once(dirname(__FILE__, 2) . '/../config.php');
 global $CFG, $DB;

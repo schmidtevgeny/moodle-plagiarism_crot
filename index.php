@@ -1,6 +1,6 @@
 <?php
 /**
- *
+ * Список похожих файлов
  * @author Sergey Butakov, Svetlana Kim
  *
  */

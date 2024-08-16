@@ -20,18 +20,16 @@ if (!defined('MOODLE_INTERNAL')) {
 
 require_once($CFG->dirroot . '/plagiarism/crot/lib.php');
 
-class plagiarism_crot_observer {
-    // todo: привязать ?
-    function crot_event_files_done($eventdata) {
-        global $DB;
-        $result = true;
-        //a file has been uploaded - submit this to the plagiarism prevention service.
-
-        return $result;
-    }
-
-    // used
-    function crot_event_file_uploaded(\mod_assign\event\assessable_submitted $event) {
+class plagiarism_crot_observer
+{
+    /**
+     * Добавляет все файлы на проверку
+     * @param \mod_assign\event\assessable_submitted $event
+     * @return bool|int
+     * @throws dml_exception
+     */
+   public static function crot_event_file_uploaded( $event)
+    {
         global $DB, $CFG;
         $result = true;
         //mainly used by assignment finalize - used if you want to handle "submit for marking" events
@@ -58,7 +56,7 @@ class plagiarism_crot_observer {
             if ($modulename == 'assign') {
                 $moodlesubmission = $DB->get_record('assign_submission', ['id' => $eventdata['objectid']], 'id');
 
-                $eventdata->pathnamehashes = [];
+//                $eventdata->pathnamehashes = [];
                 $filesconditions = ['component' => 'assignsubmission_file',
                     'itemid' => $moodlesubmission->id,
                     'userid' => $eventdata['userid']];
@@ -85,7 +83,8 @@ class plagiarism_crot_observer {
     }
 
     // todo: привязать ?
-    function crot_event_content_uploaded($eventdata) {
+  public static  function crot_event_content_uploaded($eventdata)
+    {
         global $DB;
 
         if ($eventdata->modulename == "assign") {
@@ -131,29 +130,152 @@ class plagiarism_crot_observer {
         return $result;
     }
 
-    // todo: привязать ?
-    function crot_event_mod_created($eventdata) {
-        $result = true;
-        //a new module has been created - this is a generic event that is called for all module types
-        //make sure you check the type of module before handling if needed.
-
-        return $result;
-    }
-
-    // todo: привязать ?
-    function crot_event_mod_updated($eventdata) {
-        $result = true;
-        //a module has been updated - this is a generic event that is called for all module types
-        //make sure you check the type of module before handling if needed.
-
-        return $result;
-    }
-
     // used
-    function crot_event_mod_deleted($eventdata) {
+   public static function crot_event_mod_deleted($event)
+    {
         $result = true;
         //a module has been deleted - this is a generic event that is called for all module types
         //make sure you check the type of module before handling if needed.
+
+        return $result;
+    }
+
+    /**
+     * При удалении элемента курса
+     * @param $event
+     * @return true
+     */
+   public static function core_event_course_module_deleted($event)
+    {
+        $result = true;
+
+        return $result;
+    }
+
+
+    /**
+     * При загрузке файла
+     * @param $event
+     * @return void
+     */
+ public static   function assignsubmission_file_event_assessable_uploaded($event)
+    {
+        // Отправляйте файлы только тогда, когда ученики нажимают кнопку отправки (если она включена).
+        return true;
+    }
+
+    /**
+     * При вводе текста?
+     * @param $event
+     * @return void
+     */
+  public static  function assignsubmission_onlinetext_event_assessable_uploaded($event)
+    {
+        return self::crot_event_content_uploaded($event);
+    }
+
+    /**
+     * При отправке
+     * @param $event
+     * @return void
+     */
+  public static  function mod_assign_event_assessable_submitted($event)
+    {
+        return self::crot_event_file_uploaded($event);
+    }
+
+
+    /**
+     * При загрузке работы в семинар
+     * @param $event
+     * @return void
+     */
+  public static  function mod_workshop_event_assessable_uploaded($event)
+    {
+        // забьем
+        return true;
+    }
+
+    /**
+     * При загрузке файла в форум
+     * @param $event
+     * @return void
+     */
+   public static function mod_forum_event_assessable_uploaded($event)
+    {
+        // забьем
+        return true;
+    }
+
+    /**
+     * При ответе в тесте
+     * @param $event
+     * @return void
+     */
+  public static  function mod_quiz_event_attempt_submitted($event)
+    {
+        // забьем пока
+
+//        $data=$event->get_data();
+//        $coursemodule= get_coursemodule_from_instance('quiz', $data['other']['quizid']);
+//        $authoruserid=(empty($data['relateduserid'])) ? $data['userid'] : $data['relateduserid'];
+//        $submitteruserid= $data['userid'];
+//        $cmdata = $DB->get_record(
+//            'quiz',
+//            array('id' => $coursemodule->instance)
+//        );
+//        $result = true;
+//
+//        $attempt = quiz_attempt::create($data['objectid']);
+//        foreach ($attempt->get_slots() as $slot) {
+//            $qa = $attempt->get_question_attempt($slot);
+//            if ($qa->get_question()->get_type_name() != 'essay') {
+//                continue;
+//            }
+//            $data['other']['content'] = $qa->get_response_summary();
+//
+//            // Queue text to Copyleaks.
+//            $identifier = sha1($data['other']['content']);
+//            $result = $this->queue_submission_to_copyleaks(
+//                $coursemodule,
+//                $authoruserid,
+//                $submitteruserid,
+//                $identifier,
+//                'quiz_answer',
+//                $data['objectid'],
+//                $cmdata
+//            );
+//
+//            // Queue files to Copyleaks.
+//            $context = context_module::instance($coursemodule->id);
+//            $files = $qa->get_last_qt_files('attachments', $context->id);
+//            foreach ($files as $file) {
+//                $identifier = $file->get_pathnamehash();
+//                $result = $this->queue_submission_to_copyleaks(
+//                    $coursemodule,
+//                    $authoruserid,
+//                    $submitteruserid,
+//                    $identifier,
+//                    'file',
+//                    $data['objectid'],
+//                    $cmdata
+//                );
+//            }
+//        }
+//
+//        return $result;
+
+        return true;
+    }
+
+    /**
+     * При удалении пользователя
+     * @param $event
+     * @return true
+     */
+   public static function core_event_user_deletion($event)
+    {
+        $result = true;
 
         return $result;
     }

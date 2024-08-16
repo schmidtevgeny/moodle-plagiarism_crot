@@ -1,4 +1,10 @@
 <?php
+/**
+ * Это самописная фигня для включения/выключения крота из меню управления курсом. *
+ * Добавляется через function plagiarism_crot_extend_navigation_course($navigation, $course, $context)
+ * Вроде нужна правка
+ */
+// TODO: function plagiarism_crot_extend_navigation_course($navigation, $course, $context)
 require_once(dirname(__FILE__, 2) . '/../config.php');
 // require_once($CFG->dirroot . '/my/lib.php');
 // require_once($CFG->dirroot . '/tag/lib.php');

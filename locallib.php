@@ -16,6 +16,7 @@
 
 /**
  * locallib.php - Contains Crot specific functions.
+ * Внутренняя библиотека
  *
  * @since 2.0
  * @package    plagiarism_crot
@@ -441,14 +442,14 @@ function getTopResults($queries, $todown, $msnkey, $culture_info) {
     return $allURLs->getMax($todown);
 }
 function local_crot_db() {
-    global $CFG;
+    global $CFG, $DB;
 
     $DB2 = moodle_database::get_driver_instance($CFG->dbtype, $CFG->dblibrary);
 
     try {
         $DB2->connect('localhost', $CFG->dbuser, $CFG->dbpass, $CFG->dbname, $CFG->prefix, $CFG->dboptions);
     } catch (moodle_exception $e) {
-        return false;
+        return $DB;
     }
 
     return $DB2;
