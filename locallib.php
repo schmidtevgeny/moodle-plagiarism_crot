@@ -446,7 +446,7 @@ function local_crot_db() {
     $DB2 = moodle_database::get_driver_instance($CFG->dbtype, $CFG->dblibrary);
 
     try {
-        $DB2->connect('localhost', $CFG->dbuser, $CFG->dbpass, $CFG->dbname, $CFG->prefix, $CFG->dboptions);
+        $DB2->connect('localhost', $CFG->dbuser, $CFG->dbpass2, $CFG->dbname, $CFG->prefix, $CFG->dboptions);
     } catch (moodle_exception $e) {
         return false;
     }
