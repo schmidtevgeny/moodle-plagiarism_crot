@@ -35,12 +35,14 @@ require_once($CFG->dirroot . '/plagiarism/crot/textlib.php');
 
 //
 // class fingerprint
-class Fingerprint {
+class Fingerprint
+{
     public $value;        // value
     public $position;    // original position in the document
 }    // end of Fingeprint
 
-class FpWithColors extends Fingerprint {
+class FpWithColors extends Fingerprint
+{
     public $colors;    // array of possible colors
 }
 
@@ -48,7 +50,8 @@ class FpWithColors extends Fingerprint {
 // to store one URL
 //
 
-class oneUrl {
+class oneUrl
+{
     public $mainUrl;
     public $queryID;
     public $msUrl;
@@ -59,10 +62,12 @@ class oneUrl {
 // Class URLs stores list of URLs and helps to recognize similar and retrieve top search results
 //
 
-class Urls {
+class Urls
+{
     public $list = [];
 
-    function addUrl($newURL) {
+    function addUrl($newURL)
+    {
         // look for the same ID
         $found = false;
         foreach ($this->list as $anURL) {
@@ -82,7 +87,8 @@ class Urls {
     } // end addURL
 
 
-    function getMax($howmany) {
+    function getMax($howmany)
+    {
         // select the most popular links
         $maxs = [];
         $selected = [];
@@ -101,7 +107,8 @@ class Urls {
         return $selected;
     }    //end getmax
 
-    function getTotal() {
+    function getTotal()
+    {
         $k = 0;
         foreach ($this->list as $ml) {
             $k = $k + $ml->counter;
@@ -116,7 +123,8 @@ class Urls {
 * function tokenizer
 * it takes a path to a file and returns a string variable that contains plain text extracted from the file
 */
-function tokenizer($path, $extension) {
+function tokenizer($path, $extension)
+{
     global $CFG;
     if (is_readable($path)) {
         // USE extension to choose tokenizer
@@ -156,7 +164,8 @@ function tokenizer($path, $extension) {
 // function StripText
 // it takes a text and return the text without deliiters
 //
-function StripText($atext, $subst) {
+function StripText($atext, $subst)
+{
     //TODO: extend the list of delimiters
     $delimiters = [",", ";", " ", ".", "\n", "\t", "|", "\'", "*", "-", "'", "?"];
     foreach ($delimiters as $delimiter) {
@@ -169,7 +178,8 @@ function StripText($atext, $subst) {
 // function GetFingerprint
 // it takes plain text w/o delimiters and returns fingerprint
 //
-function GetFingerprint($atext) {
+function GetFingerprint($atext)
+{
     global $CFG;
     $plagiarismsettings = (array)get_config('plagiarism_crot');
     $gram_size = $plagiarismsettings['crot_grammarsize'];
@@ -247,7 +257,8 @@ function GetFingerprint($atext) {
 /*
 * it replaces part of the text from $start to $end with the same text but colored with $color
 */
-function colorer($text, $start, $end, $color) {
+function colorer($text, $start, $end, $color)
+{
     $rem = mb_strlen($text) - $end - 1;
     return mb_substr($text, 0, $start, "utf-8") .
         html_writer::tag('b',
@@ -265,7 +276,8 @@ function colorer($text, $start, $end, $color) {
 
 //  	$searchres = fetchBingResults($query, $todown, $msnkey, $culture_info);
 
-function fetchBingResults($query, $querysize, $msnsoapkey, $culture_info) {
+function fetchBingResults($query, $querysize, $msnsoapkey, $culture_info)
+{
     // set proxy enviroment
     global $CFG;
 
@@ -306,7 +318,8 @@ function fetchBingResults($query, $querysize, $msnsoapkey, $culture_info) {
 
 ///
 // this function removes html tags from the text
-function strip_html_tags($text) {
+function strip_html_tags($text)
+{
     // PHP's strip_tags() function. Modified though
     // TODO add try / catch
     $text = preg_replace("@<script[^>]*?>.*?</script>@si", " ", $text);
@@ -327,7 +340,8 @@ function strip_html_tags($text) {
 // takes a path to the remote resoutce
 // returns plain text (hopefully)
 
-function getremotecontent($url) {
+function getremotecontent($url)
+{
     global $CFG;
     $plagiarismsettings = (array)get_config('plagiarism_crot');
     $file_size = $plagiarismsettings['crot_max_file_size'];
@@ -417,7 +431,8 @@ function getremotecontent($url) {
 //       $msnkey - MS Application ID key
 //       $culture_info - culture info for global search
 // returns x most popular links, where x = $todown
-function getTopResults($queries, $todown, $msnkey, $culture_info) {
+function getTopResults($queries, $todown, $msnkey, $culture_info)
+{
     // create list of URLs
     $allURLs = new Urls;
     $i = 0;
@@ -441,16 +456,11 @@ function getTopResults($queries, $todown, $msnkey, $culture_info) {
     }// end sending queries: we have top x results
     return $allURLs->getMax($todown);
 }
-function local_crot_db() {
+
+function local_crot_db()
+{
     global $CFG, $DB;
 
-    $DB2 = moodle_database::get_driver_instance($CFG->dbtype, $CFG->dblibrary);
+    return $DB;
 
-    try {
-        $DB2->connect('localhost', $CFG->dbuser, $CFG->dbpass2, $CFG->dbname, $CFG->prefix, $CFG->dboptions);
-    } catch (moodle_exception $e) {
-        return $DB;
-    }
-
-    return $DB2;
 }
