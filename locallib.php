@@ -460,7 +460,15 @@ function getTopResults($queries, $todown, $msnkey, $culture_info)
 function local_crot_db()
 {
     global $CFG, $DB;
+    if ($CFG->local_crot) {
+        $DB2 = moodle_database::get_driver_instance($CFG->dbtype, $CFG->dblibrary);
 
-    return $DB;
-
+        try {
+            $DB2->connect('localhost', $CFG->dbuser, $CFG->dbcrotpass, $CFG->dbname, $CFG->prefix, $CFG->dboptions);
+        } catch (moodle_exception $e) {
+            return false;
+        }
+    } else {
+        return $DB;
+    }
 }
