@@ -465,6 +465,7 @@ function local_crot_db()
 
         try {
             $DB2->connect('localhost', $CFG->dbuser, $CFG->dbcrotpass, $CFG->dbname, $CFG->prefix, $CFG->dboptions);
+            return $DB2;
         } catch (moodle_exception $e) {
             return false;
         }
