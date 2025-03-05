@@ -98,7 +98,7 @@ $similars = $DB2->get_records_sql($sql_query);
 $sql_query = "SELECT count(*) as cnt from {$CFG->prefix}plagiarism_crot_fingerprint where crot_doc_id = '$ida'";
 $numbertotal = $DB2->get_record_sql($sql_query);// get total number of hashes in the current document
 
-if($DB->get_record("plagiarism_crot_documents", ["id" => $ida,'content'=>'unknown file type'])){
+if($DB->record_exists("plagiarism_crot_documents", ["id" => $ida,'content'=>'unknown file type'])){
     echo '<strong>Этот формат файлов не поддерживается</strong>';
 }
 
