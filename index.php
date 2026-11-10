@@ -11,7 +11,7 @@ require_once($CFG->dirroot . "/plagiarism/crot/locallib.php");
 global $CFG;
 
 require_once($CFG->dirroot . "/course/lib.php");
-$DB2=local_crot_db();
+$DB2 = local_crot_db();
 $ida = required_param('id_a', PARAM_INT);   // doc id
 $user_id = required_param('user_id', PARAM_INT);
 $cid = required_param('cid', PARAM_INT);    // course id
@@ -94,18 +94,18 @@ $table2->size = ['40%', '50%', '10%'];
 $table2->attributes['class'] = 'rowtable';
 
 $sql_query = "SELECT * FROM {$CFG->prefix}plagiarism_crot_spair WHERE submission_a_id ='$ida' OR  submission_b_id = '$ida' order by number_of_same_hashes desc";
-$similars = $DB2->get_records_sql($sql_query);
+$similars = $DB2->get_records_sql($sql_query,[],0,10);
 $sql_query = "SELECT count(*) as cnt from {$CFG->prefix}plagiarism_crot_fingerprint where crot_doc_id = '$ida'";
 $numbertotal = $DB2->get_record_sql($sql_query);// get total number of hashes in the current document
 
-if($DB->record_exists("plagiarism_crot_documents", ["id" => $ida,'content'=>'unknown file type'])){
+if ($DB->record_exists("plagiarism_crot_documents", ["id" => $ida, 'content' => 'unknown file type'])) {
     echo '<strong>Этот формат файлов не поддерживается</strong>';
 }
 
 // loop to select assignments with level of similarities above the threshold
 if (!empty($similars)) {
     foreach ($similars as $asim) {
-        if ($asim->number_of_same_hashes / $numbertotal->cnt<0.03) continue;
+        if ($asim->number_of_same_hashes / $numbertotal->cnt < 0.03) continue;
         if ($asim->submission_a_id == $ida) {
             $partner = $asim->submission_b_id;
         } else {
@@ -126,9 +126,12 @@ if (!empty($similars)) {
             $partner = $subm4->file_id;
             if ($partns = $DB->get_record("files", ["id" => $partner])) {
                 $namelink = $partns->author;// get author name
-                if ($partns->userid==$user_id){
-                    $namelink .=' (сам студент)';
+                if ($partns->userid == $user_id) {
+                    $namelink .= ' (сам студент)';
                 }
+
+                $namelink .= '<br>Загружено: ' . userdate($partns->timecreated);
+
                 $courseB = $DB->get_record("course", ["id" => $subm4->courseid]);
                 $courseBname = $courseB->shortname;// get course shortname
             } else {
@@ -158,6 +161,15 @@ $namelink = html_writer::link(
     new moodle_url('/user/view.php', ['id' => $user_id]),
     fullname($user)
 );
+//
+$subm3 = $DB->get_record("plagiarism_crot_documents", ["id" => $ida]);
+if ($subm3->crot_submission_id != 0) {
+    $subm4 = $DB->get_record("plagiarism_crot_files", ["id" => $subm3->crot_submission_id]);
+    $partner = $subm4->file_id;
+    if ($partns = $DB->get_record("files", ["id" => $partner])) {
+        $namelink .= '<br>Загружено: ' . userdate($partns->timecreated);
+    }
+}
 
 $table->data[] = [$namelink, html_writer::table($table2)];
 

@@ -127,7 +127,7 @@ $string['name_unknown'] = 'имя неизвестно';
 $string['webdoc'] = 'Веб-документ: <br> Источник:';
 $string['webdocument'] = 'Веб-документ';
 $string['bing_search'] = '<br>Глобальный поиск плагиата осуществляется с помощью поисковой системы Bing';
-$string['assignments_not_displayed'] = 'Задания с процентом совпадения меньше {$a}% не отображаются';
+$string['assignments_not_displayed'] = 'Задания с процентом совпадения меньше {$a}% не отображаются. Максимум 10 файлов.';
 
 $string['download_inwicast_message'] = '<p>INWICAST Publisher is a very simple and powerful tool designed to record and publish podcasts, videocasts, screencasts and slidecasts for the web and for mobile devices. INWICAST Publisher allows you to:</p><p>
 
