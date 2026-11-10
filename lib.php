@@ -36,8 +36,10 @@ require_once($CFG->dirroot . '/plagiarism/lib.php');
 
 
 ///// Crot Class ////////////////////////////////////////////////////
-class plagiarism_plugin_crot extends plagiarism_plugin {
-    public function get_all_system_config() {
+class plagiarism_plugin_crot extends plagiarism_plugin
+{
+    public function get_all_system_config()
+    {
         global $DB;
 
         static $map = [];
@@ -61,10 +63,11 @@ class plagiarism_plugin_crot extends plagiarism_plugin {
      * @return string
      *
      */
-    public function get_links($linkarray) {
+    public function get_links($linkarray)
+    {
         global $DB, $CFG, $PAGE;
         require_once($CFG->dirroot . "/plagiarism/crot/locallib.php");
-        $DB2=local_crot_db();
+        $DB2 = local_crot_db();
         // echo '<pre>';
         if (array_key_exists('forum', $linkarray)) return '';
         if (!array_key_exists('file', $linkarray)) return '';
@@ -85,26 +88,45 @@ class plagiarism_plugin_crot extends plagiarism_plugin {
                 if (!$crot_doc_rec = $DB->get_record("plagiarism_crot_documents", ["crot_submission_id" => $plagiarism_crot_files_rec->id])) {
                     $output .= '';// if there is no record in plagiarism_crot_documents about this file then nothing to show
                 } else {
-                    // TODO: remove self
-                    $sql_query = "SELECT max(number_of_same_hashes) AS max 
+                    // NOTE: remove self
+                    $sql_query = "SELECT * 
                                     FROM {plagiarism_crot_spair} 
                                    WHERE submission_a_id = :submission_a_id
-                                         OR  submission_b_id = :submission_b_id";
-                    if (!$similarity = $DB2->get_record_sql($sql_query, ['submission_a_id' => $crot_doc_rec->id, 'submission_b_id' => $crot_doc_rec->id])) {
-                        // get maximum number of same hashes for the current document
-                        $output .= html_writer::empty_tag('br') .
-                            html_writer::tag('b', get_string('no_similarities', 'plagiarism_crot'));
-                    } else {
-                        $sql_query = "SELECT count(*) AS cnt 
+                                         OR  submission_b_id = :submission_b_id
+                                         ORDER BY number_of_same_hashes DESC";
+
+                    $similaritys = $DB2->get_records_sql($sql_query, ['submission_a_id' => $crot_doc_rec->id, 'submission_b_id' => $crot_doc_rec->id], 0, 50);
+                    if (count($similaritys)) {
+                        $perc = 0;
+                        foreach ($similaritys as $similarity) {
+                            $test = $similarity->submission_a_id;
+                            if ($test == $crot_doc_rec->id) {
+                                $test = $similarity->submission_b_id;
+                            }
+
+                            $testdoc = $DB->get_record("plagiarism_crot_documents", ["id" => $test]);
+                            if ($testdoc) {
+                                $testfile = $DB->get_record("plagiarism_crot_files", ["id" => $testdoc->crot_submission_id]);
+                                if ($testfile) {
+                                    $fileinfo = $DB->get_record('files', ["id" => $testfile->file_id]);
+                                    if ($fileinfo) {
+                                        if ($fileinfo->userid != $userid) {
+                                            $sql_query = "SELECT COUNT(*) AS cnt
                                         FROM {plagiarism_crot_fingerprint} 
                                        WHERE crot_doc_id = :crot_doc_id";
-                        $numbertotal = $DB2->get_record_sql($sql_query, ['crot_doc_id' => $crot_doc_rec->id]);// get total number of hashes for the current document
-                        if ($numbertotal->cnt == 0) {
-                            $perc = 0;
-                        } else {
-                            $perc = round(($similarity->max / $numbertotal->cnt) * 100, 2);
-                        }
+                                            $numbertotal = $DB2->get_record_sql($sql_query, ['crot_doc_id' => $crot_doc_rec->id]);// get total number of hashes for the current document
+                                            if ($numbertotal->cnt == 0) {
+                                                $perc = 0;
+                                            } else {
+                                                $perc = round(($similarity->number_of_same_hashes / $numbertotal->cnt) * 100, 2);
+                                            }
+                                            break;
 
+                                        }
+                                    }
+                                }
+                            }
+                        }
                         if (has_capability('mod/assignment:grade', $PAGE->context)) {
                             $output .= html_writer::empty_tag('br') .
                                 html_writer::tag('b',
@@ -120,7 +142,47 @@ class plagiarism_plugin_crot extends plagiarism_plugin {
                                     get_string('val_similarity_score', 'plagiarism_crot', $perc)
                                 );
                         }
+                    } else {
+                        $output .= html_writer::empty_tag('br') .
+                            html_writer::tag('b', get_string('no_similarities', 'plagiarism_crot'));
                     }
+                    // NOTE: original
+//                    $sql_query = "SELECT MAX(number_of_same_hashes) AS MAX
+//                                    FROM {plagiarism_crot_spair}
+//                                   WHERE submission_a_id = :submission_a_id
+//                                         OR  submission_b_id = :submission_b_id";
+//                    if (!$similarity = $DB2->get_record_sql($sql_query, ['submission_a_id' => $crot_doc_rec->id, 'submission_b_id' => $crot_doc_rec->id])) {
+//                        // get maximum number of same hashes for the current document
+//                        $output .= html_writer::empty_tag('br') .
+//                            html_writer::tag('b', get_string('no_similarities', 'plagiarism_crot'));
+//                    } else {
+//
+//                        $sql_query = "SELECT COUNT(*) AS cnt
+//                                        FROM {plagiarism_crot_fingerprint}
+//                                       WHERE crot_doc_id = :crot_doc_id";
+//                        $numbertotal = $DB2->get_record_sql($sql_query, ['crot_doc_id' => $crot_doc_rec->id]);// get total number of hashes for the current document
+//                        if ($numbertotal->cnt == 0) {
+//                            $perc = 0;
+//                        } else {
+//                            $perc = round(($similarity->max / $numbertotal->cnt) * 100, 2);
+//                        }
+//
+//                        if (has_capability('mod/assignment:grade', $PAGE->context)) {
+//                            $output .= html_writer::empty_tag('br') .
+//                                html_writer::tag('b',
+//                                    html_writer::link(
+//                                        new moodle_url('/plagiarism/crot/index.php',
+//                                            ['id_a' => $crot_doc_rec->id, 'user_id' => $userid, 'cid' => $cid]),
+//                                        get_string('val_similarity_score', 'plagiarism_crot', $perc)
+//                                    )
+//                                );
+//                        } else {
+//                            $output .= html_writer::empty_tag('br') .
+//                                html_writer::tag('b',
+//                                    get_string('val_similarity_score', 'plagiarism_crot', $perc)
+//                                );
+//                        }
+//                    }
                 }
             }
         } else {
@@ -147,7 +209,7 @@ class plagiarism_plugin_crot extends plagiarism_plugin {
                 if (!$crot_doc_rec = $DB->get_record("plagiarism_crot_documents", ["crot_submission_id" => $plagiarism_crot_files_rec->id])) {
                     $output .= '';// if there is no record in plagiarism_crot_documents about this file then nothing to show
                 } else {
-                    $sql_query = "SELECT max(number_of_same_hashes) AS max 
+                    $sql_query = "SELECT MAX(number_of_same_hashes) AS MAX 
                                     FROM {plagiarism_crot_spair} 
                                    WHERE submission_a_id = :submission_a_id
                                          OR  submission_b_id = :submission_b_id";
@@ -156,7 +218,7 @@ class plagiarism_plugin_crot extends plagiarism_plugin {
                         $output .= html_writer::empty_tag('br') .
                             html_writer::tag('b', get_string('no_similarities', 'plagiarism_crot'));
                     } else {
-                        $sql_query = "SELECT count(*) AS cnt 
+                        $sql_query = "SELECT COUNT(*) AS cnt 
                                         FROM {plagiarism_crot_fingerprint} 
                                        WHERE crot_doc_id = :crot_doc_id";
                         $numbertotal = $DB2->get_record_sql($sql_query, ['crot_doc_id' => $crot_doc_rec->id]);// get total number of hashes for the current document
@@ -193,7 +255,8 @@ class plagiarism_plugin_crot extends plagiarism_plugin {
      * @param int $cmid - course module id
      * @return string
      */
-    public function print_disclosure($cmid) {
+    public function print_disclosure($cmid)
+    {
         global $DB, $OUTPUT;
         // check if this cmid has plagiarism enabled
         $select = 'cm = ? AND ' . $DB->sql_compare_text('name') . ' = "enabled"';
@@ -221,16 +284,19 @@ class plagiarism_plugin_crot extends plagiarism_plugin {
      * @param object $course - full Course object
      * @param object $cm - full cm object
      */
-    public function update_status($course, $cm) {
+    public function update_status($course, $cm)
+    {
         //called at top of submissions/grading pages - allows printing of admin style links or updating status
     }
 
-    public function config_options() {
+    public function config_options()
+    {
         return ['enabled', 'crot_local', 'crot_global'];
     }
 }
 
-function plagiarism_crot_coursemodule_standard_elements($formwrapper, $mform) {
+function plagiarism_crot_coursemodule_standard_elements($formwrapper, $mform)
+{
     global $DB;
     $plagiarismsettings = (array)get_config('plagiarism_crot');
     if (!empty($plagiarismsettings['enabled'])) {
@@ -259,7 +325,8 @@ function plagiarism_crot_coursemodule_standard_elements($formwrapper, $mform) {
     }
 }
 
-function plagiarism_crot_coursemodule_edit_post_actions($data, $course) {
+function plagiarism_crot_coursemodule_edit_post_actions($data, $course)
+{
     global $DB;
     $plugin = new plagiarism_plugin_crot();
     $plagiarismsettings = (array)get_config('plagiarism_crot');
@@ -286,7 +353,8 @@ function plagiarism_crot_coursemodule_edit_post_actions($data, $course) {
     return $data;
 }
 
-function plagiarism_crot_extend_navigation_course($navigation, $course, $context) {
+function plagiarism_crot_extend_navigation_course($navigation, $course, $context)
+{
     global $PAGE;
     if (!$PAGE->course || $PAGE->course->id == SITEID) {
         return null;
