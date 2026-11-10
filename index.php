@@ -126,6 +126,9 @@ if (!empty($similars)) {
             $partner = $subm4->file_id;
             if ($partns = $DB->get_record("files", ["id" => $partner])) {
                 $namelink = $partns->author;// get author name
+                if ($partns->userid==$user_id){
+                    $namelink .=' (сам студент)';
+                }
                 $courseB = $DB->get_record("course", ["id" => $subm4->courseid]);
                 $courseBname = $courseB->shortname;// get course shortname
             } else {

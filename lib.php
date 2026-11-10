@@ -85,6 +85,7 @@ class plagiarism_plugin_crot extends plagiarism_plugin {
                 if (!$crot_doc_rec = $DB->get_record("plagiarism_crot_documents", ["crot_submission_id" => $plagiarism_crot_files_rec->id])) {
                     $output .= '';// if there is no record in plagiarism_crot_documents about this file then nothing to show
                 } else {
+                    // TODO: remove self
                     $sql_query = "SELECT max(number_of_same_hashes) AS max 
                                     FROM {plagiarism_crot_spair} 
                                    WHERE submission_a_id = :submission_a_id
@@ -123,6 +124,7 @@ class plagiarism_plugin_crot extends plagiarism_plugin {
                 }
             }
         } else {
+            // прямой ввод
             $path = $linkarray['content'];
             $path = strip_tags($path);
             $path = sha1($path);
